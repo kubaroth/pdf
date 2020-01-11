@@ -213,22 +213,22 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
     IByteReader* streamReader = parser.CreateInputStreamReader(object);
     Byte buffer[1000];
 
-    // instead of passing open file heree  - Test if the streamstart needs to be set (looks the same)
-    InputFile pdfFile;
-    EStatusCode status = pdfFile.OpenFile("/u/kr/Downloads/dsohowto2.pdf");
-    if(status != eSuccess) {
-        cout << "problem opening file" <<endl;
-    }
-    IByteReaderWithPosition* inPDFStream = pdfFile.GetInputStream();
+    // // instead of passing open file heree  - Test if the streamstart needs to be set (looks the same)
+    // InputFile pdfFile;
+    // EStatusCode status = pdfFile.OpenFile("/u/kr/Downloads/dsohowto2.pdf");
+    // if(status != eSuccess) {
+    //     cout << "problem opening file" <<endl;
+    // }
+    // IByteReaderWithPosition* inPDFStream = pdfFile.GetInputStream();
     
-    if(streamReader) {
-        inPDFStream->SetPosition(object->GetStreamContentStart());
-        while(streamReader->NotEnded()) {
-            LongBufferSizeType readAmount = streamReader->Read(buffer,1000);
-            cout.write((const char*)buffer,readAmount);
-        }
-        cout << "\n";
-    }
+    // if(streamReader) {
+    //     inPDFStream->SetPosition(object->GetStreamContentStart());
+    //     while(streamReader->NotEnded()) {
+    //         LongBufferSizeType readAmount = streamReader->Read(buffer,1000);
+    //         cout.write((const char*)buffer,readAmount);
+    //     }
+    //     cout << "\n";
+    // }
     
 }
 
