@@ -165,8 +165,8 @@ void showPagesInfo(PDFParser& parser, InputFile& pdfFile, EStatusCode status)
 }
 
 // Forward declaration
-void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth);
-void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReference *obj, int depth);
+void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, InputFile &pdfFile, int depth);
+void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReference *obj, InputFile &pdfFile, int depth);
 
 void parseObjectName(PDFParser &parser, PDFName *obj, int depth){
     depth++;
@@ -203,11 +203,11 @@ void parseObjectReal(PDFParser &parser, PDFReal *obj, int depth){
     cout << std::string(depth, ' ') << " [real]: " << obj->GetValue() <<endl;
 }
 
-void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
+void parseObjectStream(PDFParser &parser, PDFStreamInput *object, InputFile &pdfFile, int depth){
     depth++;
     PDFDictionary* obj = object->QueryStreamDictionary();
     cout << std::string(depth, '.') << "streamDictionary " << endl;
-    parsePDFDictionary(parser, obj, depth);
+    parsePDFDictionary(parser, obj, pdfFile, depth);
 
 
     IByteReader* streamReader = parser.CreateInputStreamReader(object);
@@ -219,16 +219,16 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
     // if(status != eSuccess) {
     //     cout << "problem opening file" <<endl;
     // }
-    // IByteReaderWithPosition* inPDFStream = pdfFile.GetInputStream();
+    IByteReaderWithPosition* inPDFStream = pdfFile.GetInputStream();
     
-    // if(streamReader) {
-    //     inPDFStream->SetPosition(object->GetStreamContentStart());
-    //     while(streamReader->NotEnded()) {
-    //         LongBufferSizeType readAmount = streamReader->Read(buffer,1000);
-    //         cout.write((const char*)buffer,readAmount);
-    //     }
-    //     cout << "\n";
-    // }
+    if(streamReader) {
+        inPDFStream->SetPosition(object->GetStreamContentStart());
+        while(streamReader->NotEnded()) {
+            LongBufferSizeType readAmount = streamReader->Read(buffer,1000);
+            cout.write((const char*)buffer,readAmount);
+        }
+        cout << "\n";
+    }
     
 }
 
@@ -238,7 +238,7 @@ void parseObjectSymbol(PDFParser &parser, PDFSymbol *obj, int depth){
     cout << std::string(depth, ' ') << " [symbol]: " << "UNKNOWN" <<endl;
 }
 
-void parseObjectArray(PDFParser &parser, PDFArray *object, int depth){
+void parseObjectArray(PDFParser &parser, PDFArray *object, InputFile &pdfFile, int depth){
     depth++;
     SingleValueContainerIterator<PDFObjectVector> it = object->GetIterator();
     int length = object->GetLength();
@@ -276,11 +276,11 @@ void parseObjectArray(PDFParser &parser, PDFArray *object, int depth){
         }
         else if (obj->GetType() == PDFObject::ePDFObjectArray){
             cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
-            parseObjectArray(parser, (PDFArray*)obj, depth);
+            parseObjectArray(parser, (PDFArray*)obj, pdfFile, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectDictionary){
             cout << std::string(depth, '.') << "(ePDFObjectDictionary)" << endl;  // 8
-            parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
+            parsePDFDictionary(parser, (PDFDictionary*)obj, pdfFile, depth);
         }
         // TODO:this looks like create infinite recrsion
         // else if (obj->GetType() == PDFObject::ePDFObjectIndirectObjectReference){
@@ -289,7 +289,7 @@ void parseObjectArray(PDFParser &parser, PDFArray *object, int depth){
         // }
         else if (obj->GetType() == PDFObject::ePDFObjectStream){         // 10
             cout << std::string(depth, '.') << "ePDFObjectStream" << endl;
-            parseObjectStream(parser, (PDFStreamInput*)obj, depth);
+            parseObjectStream(parser, (PDFStreamInput*)obj, pdfFile, depth);
         }
         else {
             cout << std::string(depth, '.') << "array ELSE " << obj->GetType() << endl; //IndirectRef
@@ -300,7 +300,7 @@ void parseObjectArray(PDFParser &parser, PDFArray *object, int depth){
 
 }
 
-void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
+void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, InputFile &pdfFile, int depth=0){
     depth++;
     auto it = obj->GetIterator();
   
@@ -338,19 +338,19 @@ void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
         }
         else if (obj->GetType() == PDFObject::ePDFObjectArray){
             cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
-            parseObjectArray(parser, (PDFArray*)obj, depth);
+            parseObjectArray(parser, (PDFArray*)obj, pdfFile, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectDictionary){
             cout << std::string(depth, '.') << "(ePDFObjectDictionary)" << endl;  // 8
-            parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
+            parsePDFDictionary(parser, (PDFDictionary*)obj, pdfFile, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectIndirectObjectReference){
             cout << std::string(depth, '.') << "(ePDFObjectIndirectObjectReference)" << endl;
-            parsePDFIndirectObjectReference(parser, (PDFIndirectObjectReference*) obj, depth);
+            parsePDFIndirectObjectReference(parser, (PDFIndirectObjectReference*) obj, pdfFile, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectStream){         // 10
             cout << std::string(depth, '.') << "ePDFObjectStream" << endl;
-            parseObjectStream(parser, (PDFStreamInput*)obj, depth);
+            parseObjectStream(parser, (PDFStreamInput*)obj, pdfFile, depth);
         }
         else {
             cout << std::string(depth, '.') << "UNKNOWN" <<endl;
@@ -358,7 +358,7 @@ void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
     } while(it.MoveNext());
     
 }
-void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReference *object, int depth=0){
+void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReference *object, InputFile &pdfFile, int depth=0){
     depth++;
 
     PDFObject* obj = parser.ParseNewObject(object->mObjectID);
@@ -393,15 +393,15 @@ void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReferen
     }
     else if (obj->GetType() == PDFObject::ePDFObjectArray){
         cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
-        parseObjectArray(parser, (PDFArray*)obj, depth);
+        parseObjectArray(parser, (PDFArray*)obj, pdfFile, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectDictionary){
         cout << std::string(depth, '.') << "ePDFObjectDictionary" << endl;
-        parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
+        parsePDFDictionary(parser, (PDFDictionary*)obj, pdfFile, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectStream){
         cout << std::string(depth, '.') << "ePDFObjectStream" << endl;
-        parseObjectStream(parser, (PDFStreamInput*)obj, depth);
+        parseObjectStream(parser, (PDFStreamInput*)obj, pdfFile, depth);
     }
     else {
         cout << std::string(depth, '.') << "UNKNOWN" << endl;
@@ -429,7 +429,7 @@ void testPage(PDFParser &parser, InputFile &pdfFile){
     //     (PDFStreamInput*)contents.GetPtr(),pdfFile.GetInputStream(),parser)
     // }
 
-    parsePDFDictionary(parser, page.GetPtr());
+    parsePDFDictionary(parser, page.GetPtr(), pdfFile);
 
 }
     
