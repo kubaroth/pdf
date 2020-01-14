@@ -180,25 +180,26 @@ EStatusCode IterateObjectTypes(PDFObject* inObject,PDFParser& inParser,IByteWrit
     //////////////////////////
     
 
-    // MapIterator<PDFNameToPDFObjectMap> it = aDictionary->GetIterator();
+    MapIterator<PDFNameToPDFObjectMap> it = aDictionary->GetIterator();
     
-    // do {
-    //     PDFObject *obj2 = it.GetValue();
-    //     if (obj2->GetType() == PDFObject::ePDFObjectInteger){
-    //         // cout << "printing" << ((PDFInteger*)obj2)->GetValue() << endl;
+    do {
+        PDFObject *obj2 = it.GetValue();
+        if (obj2->GetType() == PDFObject::ePDFObjectInteger){
+            // cout << "printing" << ((PDFInteger*)obj2)->GetValue() << endl;
 
-    //         int bufLen = ((PDFInteger*)obj2)->GetValue();
+            int bufLen = ((PDFInteger*)obj2)->GetValue();
         
-    //         IByteReader* streamReader = inParser.CreateInputStreamReader((PDFStreamInput*)inObject);
-    //         Byte buffer[bufLen];
-    //         if(streamReader) {
-    //         while(streamReader->NotEnded()) {
-    //             LongBufferSizeType readAmount = streamReader->Read(buffer, bufLen);
-    //             cout.write((const char*)buffer,readAmount);
-    //         }
-    //         }
-    //     }
-    // } while(it.MoveNext());
+            IByteReader* streamReader = inParser.CreateInputStreamReader((PDFStreamInput*)inObject);
+            Byte buffer[bufLen];
+            if(streamReader) {
+            while(streamReader->NotEnded()) {
+                LongBufferSizeType readAmount = streamReader->Read(buffer, bufLen);
+                cout.write((const char*)buffer,readAmount);
+            }
+            }
+            break;
+        }
+    } while(it.MoveNext());
     
 
     /////////////////////////////////

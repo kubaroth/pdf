@@ -428,6 +428,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     cout.write((const char*)buffer,readAmount);
                 }
             }
+            break;  // break after first Length
         }
     } while(it.MoveNext());
         
