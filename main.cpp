@@ -414,13 +414,19 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
     cout << "content type: " << object->scPDFObjectTypeLabel(object->GetType()) << endl;
     PDFStreamInput* inStream = (PDFStreamInput*)object;//contents.GetPtr();
 
-    // Option 1 - parsing into Buffer (mostly to debug input)
+
+    // Option 1 - working but need to postion to be set (i think)
     IByteReader* streamReader = parser.CreateInputStreamReader(inStream);
+
+    // Option 2 - write direction but segfault - WIP
+    // IByteReaderWithPosition* streamReader = parser.GetParserStream();
+    // streamReader->SetPosition(inStream->GetStreamContentStart());
+    
     int bufLen = 1;
     Byte buffer[bufLen];
     int index = 0;
     if(streamReader) {
-
+        cout << "start pos: " <<inStream->GetStreamContentStart() << endl;
         // string path = "../test_fu.pdf";   // openoffice 
         // InputFile pdfFile;
             // EStatusCode status = pdfFile.OpenFile(path);
