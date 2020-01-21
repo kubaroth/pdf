@@ -411,52 +411,38 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
     parsePDFDictionary(parser, aDictionary.GetPtr(), depth);
 
 
-    MapIterator<PDFNameToPDFObjectMap> it = aDictionary->GetIterator();
-    
-    do {
-        PDFObject *obj2 = it.GetValue();
-        if (obj2->GetType() == PDFObject::ePDFObjectInteger){
-            // cout << "printing" << ((PDFInteger*)obj2)->GetValue() << endl;
+    cout << "content type: " << object->scPDFObjectTypeLabel(object->GetType()) << endl;
+    PDFStreamInput* inStream = (PDFStreamInput*)object;//contents.GetPtr();
 
-            int bufLen = ((PDFInteger*)obj2)->GetValue();
-            
-            IByteReader* streamReader = parser.CreateInputStreamReader(object);
-            Byte buffer[bufLen];
-            if(streamReader) {
-                while(streamReader->NotEnded()) {
-                    LongBufferSizeType readAmount = streamReader->Read(buffer, bufLen);
-                    cout.write((const char*)buffer,readAmount);
-                }
+    // Option 1 - parsing into Buffer (mostly to debug input)
+    IByteReader* streamReader = parser.CreateInputStreamReader(inStream);
+    int bufLen = 1;
+    Byte buffer[bufLen];
+    int index = 0;
+    if(streamReader) {
+
+        // string path = "../test_fu.pdf";   // openoffice 
+        // InputFile pdfFile;
+            // EStatusCode status = pdfFile.OpenFile(path);
+        // pdfFile.GetInputStream()->SetPosition(inStream->GetStreamContentStart());  // TODO:
+        while(streamReader->NotEnded()) {
+
+            index++;
+            if (index == 177){  //177     //128 i  // 123 f
+                int a=1;
             }
-            break;  // break after first Length
+            // buffer[0]={'\000'};
+            LongBufferSizeType readAmount = streamReader->Read(buffer, bufLen);
+
+            cout.write((const char*)buffer,readAmount);
         }
-    } while(it.MoveNext());
-        
+        // cout << "\n";
+    }
+    else {
+        cout << "Unable to read content stream\n";
+    }
+    delete streamReader;
 
-
-    /////////////////////////////////////
-
-    // Byte buffer[100000];
-    // IByteReader* r = parser.StartReadingFromStream(object);
-    // while (r->NotEnded()){
-    //     LongBufferSizeType readAmount = r->Read(buffer,100000);
-    //     cout.write((const char*)buffer,readAmount);
-    //     cout << '\n ';
-    //     cout << "===============================\n";
-    // }
-
-    // exit(0);      //
-
-    ////////////////////////////////////////
-
-    // PDFObjectParser* p = parser.StartReadingObjectsFromStream(object);
-    // PDFObject* obj;
-    // while( obj=p->ParseNewObject()) {  // TODO: this skips the first one
-
-    //     cout << "parsing " << obj->scPDFObjectTypeLabel(obj->GetType()) << " " <<endl;
-        
-    // }  
-  
   
 }
 
@@ -852,6 +838,33 @@ void parse_stream_objects(){
 }
 
 
+void parse_stream_objects2(){
+    // string path = "../dsohowto.pdf";
+    string path = "../test_fu.pdf";   // openoffice 
+    // string path = "../test_fu_aaa.pdf";  // google docs
+    cout << path <<endl;
+
+    PDFParser parser;
+    InputFile pdfFile;
+
+    EStatusCode status = pdfFile.OpenFile(path);
+    if(status != eSuccess) {
+        return ;
+    }
+
+    status = parser.StartPDFParsing(pdfFile.GetInputStream());
+    if(status != eSuccess) {
+        return;
+    }
+    
+    // Parse page object
+    RefCountPtr<PDFDictionary> page(parser.ParsePage(0));
+    RefCountPtr<PDFObject> contents(parser.QueryDictionaryObject(page.GetPtr(),"Contents"));
+
+    parsePDFDictionary(parser, page.GetPtr(), 0);
+        
+}
+    
 int main() {
 //    basic();
 //    shapes();
@@ -859,7 +872,8 @@ int main() {
     // readin_original();
     // readin();
 
-    parse_stream_objects();
+    // parse_stream_objects();
+    parse_stream_objects2();
 
     // testPage3();
 
