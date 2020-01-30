@@ -532,7 +532,7 @@ void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
         PDFName* name = it.GetKey();
         PDFObject* obj = it.GetValue();
 
-        cout << "name " << name->GetValue() <<endl;
+        cout << "name " << name->GetValue() << endl;
         if (name->GetValue().compare("Parent") == 0) return;  // avoid cycles
         
         if (obj->GetType() == PDFObject::ePDFObjectBoolean){
@@ -589,10 +589,10 @@ void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReferen
     depth++;
 
     // remove duplicates
-    auto found = pageIds.find(object->mObjectID);
-    if (found != pageIds.end()) return;
-    cout << "+ID+" << object->mObjectID<<endl;
-    pageIds.insert(object->mObjectID);
+    // auto found = pageIds.find(object->mObjectID);
+    // if (found != pageIds.end()) return;
+    // cout << "+ID+" << object->mObjectID<<endl;
+    // pageIds.insert(object->mObjectID);
 
     PDFObject* obj = parser.ParseNewObject(object->mObjectID); // TODO: convert to RefCountPtr<PDFObject>
 
@@ -860,8 +860,8 @@ void parse_stream_objects(){
 void parse_stream_objects2(){
     // string path = "../dsohowto.pdf";
     // string path = "../test_fu.pdf";  // openoffice 
-    // string path = "../test_fu_aaa.pdf";  // google docs
-    string path = "../test_fu_2page.pdf";
+    string path = "../test_fu_aaa.pdf";  // google docs
+    // string path = "../test_fu_2page.pdf";
     // cout << path <<endl;
 
     PDFParser parser;
@@ -878,16 +878,20 @@ void parse_stream_objects2(){
     }
     
     // Parse page object
-    RefCountPtr<PDFDictionary> page(parser.ParsePage(1));
+    RefCountPtr<PDFDictionary> page(parser.ParsePage(0));
     RefCountPtr<PDFObject> contents(parser.QueryDictionaryObject(page.GetPtr(),"Contents"));
 
+    // Alternative version of accessing a page
+    cout << "pageID: " << parser.GetPageObjectID(0) <<endl;
+    PDFObject* oo = parser.ParseNewObject(parser.GetPageObjectID(0));
+    cout << "aa " << oo->scPDFObjectTypeLabel(oo->GetType()) <<endl;
+    parsePDFDictionary(parser, (PDFDictionary*)oo, 0);
+    
     // cout << contents->scPDFObjectTypeLabel(contents->GetType()) <<endl;
     // parseObjectStream(parser, (PDFStreamInput*)contents.GetPtr(), 0);
+    // parsePDFIndirectObjectReference(parser, (PDFIndirectObjectReference*)contents.GetPtr(), 0);
     
     parsePDFDictionary(parser, page.GetPtr(), 0);
-
-
-
         
 }
     
