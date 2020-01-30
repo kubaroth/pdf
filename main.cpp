@@ -41,6 +41,9 @@
 #include <PDFWriter/PDFSymbol.h>
 #include <PDFWriter/PDFStreamInput.h>
 
+#include <set>
+
+static std::set<ObjectIDType>pageIds;  // TODO: temp structure to remove duplicates of indirectRefs objects
 
 // svg
 //#include <QDebug>
@@ -431,6 +434,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
         // InputFile pdfFile;
             // EStatusCode status = pdfFile.OpenFile(path);
         // pdfFile.GetInputStream()->SetPosition(inStream->GetStreamContentStart());  // TODO:
+
         while(streamReader->NotEnded()) {
 
             index++;
@@ -503,10 +507,10 @@ void parseObjectArray(PDFParser &parser, PDFArray *object, int depth){
             parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
         }
         // TODO:this looks like create infinite recrsion
-        // else if (obj->GetType() == PDFObject::ePDFObjectIndirectObjectReference){
-        //     cout << std::string(depth, '.') << "(ePDFObjectIndirectObjectReference)" << endl;
-        //     parsePDFIndirectObjectReference(parser, (PDFIndirectObjectReference*) obj, depth);
-        // }
+        else if (obj->GetType() == PDFObject::ePDFObjectIndirectObjectReference){
+            cout << std::string(depth, '.') << "(ePDFObjectIndirectObjectReference)" << endl;
+            parsePDFIndirectObjectReference(parser, (PDFIndirectObjectReference*) obj, depth);
+        }
         else if (obj->GetType() == PDFObject::ePDFObjectStream){         // 10
             //cout << std::string(depth, '.') << "ePDFObjectStream" << endl;
             parseObjectStream(parser, (PDFStreamInput*)obj, depth);
@@ -527,50 +531,53 @@ void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
     do {  // TODO: this skips the first one
         PDFName* name = it.GetKey();
         PDFObject* obj = it.GetValue();
+
+        cout << "name " << name->GetValue() <<endl;
+        if (name->GetValue().compare("Parent") == 0) return;  // avoid cycles
         
         if (obj->GetType() == PDFObject::ePDFObjectBoolean){
-            //cout << std::string(depth, '.') << "ePDFObjectBoolean" <<endl;
-            parseObjectBoolean(parser, (PDFBoolean*)obj, depth);
+            cout << std::string(depth, '.') << "ePDFObjectBoolean" <<endl;
+            // parseObjectBoolean(parser, (PDFBoolean*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectLiteralString){
-            //cout << std::string(depth, '.') << "ePDFObjectLiteralString" << endl;
-            parseObjectLiteralStr(parser, (PDFLiteralString*)obj, depth);
+            cout << std::string(depth, '.') << "ePDFObjectLiteralString" << endl;
+            // parseObjectLiteralStr(parser, (PDFLiteralString*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectHexString){
-            //cout << std::string(depth, '.') << "ePDFObjectHexString" << endl;
-            parseObjectHexString(parser, (PDFHexString*)obj, depth);
+            cout << std::string(depth, '.') << "ePDFObjectHexString" << endl;
+            // parseObjectHexString(parser, (PDFHexString*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectNull){
-            //cout << std::string(depth, '.') << "ePDFObjectNull" << endl;
-            parseObjectNull(parser, (PDFNull*)obj, depth);
+            cout << std::string(depth, '.') << "ePDFObjectNull" << endl;
+            // parseObjectNull(parser, (PDFNull*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectName){
-            //cout << std::string(depth, '.') << "ePDFObjectName" << endl;
-            parseObjectName(parser, (PDFName*)obj, depth);
+            cout << std::string(depth, '.') << "ePDFObjectName" << endl;
+            // parseObjectName(parser, (PDFName*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectInteger){
-            //cout << std::string(depth, '.') << "ePDFObjectInteger" << endl;
-            parseObjectInteger(parser, (PDFInteger*)obj, depth);
+            cout << std::string(depth, '.') << "ePDFObjectInteger" << endl;
+            // parseObjectInteger(parser, (PDFInteger*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectReal){
-            //cout << std::string(depth, '.') << "ePDFObjectReal" << endl;
-            parseObjectReal(parser, (PDFReal*)obj, depth);
+            cout << std::string(depth, '.') << "ePDFObjectReal" << endl;
+            // parseObjectReal(parser, (PDFReal*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectArray){
-            //cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
-            parseObjectArray(parser, (PDFArray*)obj, depth);
+            cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
+            // parseObjectArray(parser, (PDFArray*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectDictionary){
-            //cout << std::string(depth, '.') << "(ePDFObjectDictionary)" << endl;  // 8
-            parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
+            cout << std::string(depth, '.') << "(ePDFObjectDictionary)" << endl;  // 8
+            // parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectIndirectObjectReference){
-            //cout << std::string(depth, '.') << "(ePDFObjectIndirectObjectReference)" << endl;
+            cout << std::string(depth, '.') << "(ePDFObjectIndirectObjectReference)" << endl;
             parsePDFIndirectObjectReference(parser, (PDFIndirectObjectReference*) obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectStream){         // 10
-            //cout << std::string(depth, '.') << "ePDFObjectStream" << endl;
-            parseObjectStream(parser, (PDFStreamInput*)obj, depth);
+            cout << std::string(depth, '.') << "ePDFObjectStream" << endl;
+            // parseObjectStream(parser, (PDFStreamInput*)obj, depth);
         }
         else {
             //cout << std::string(depth, '.') << "UNKNOWN" <<endl;
@@ -580,6 +587,12 @@ void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
 }
 void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReference *object, int depth=0){
     depth++;
+
+    // remove duplicates
+    auto found = pageIds.find(object->mObjectID);
+    if (found != pageIds.end()) return;
+    cout << "+ID+" << object->mObjectID<<endl;
+    pageIds.insert(object->mObjectID);
 
     PDFObject* obj = parser.ParseNewObject(object->mObjectID); // TODO: convert to RefCountPtr<PDFObject>
 
@@ -620,7 +633,7 @@ void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReferen
         parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectStream){
-        //cout << std::string(depth, '.') << "ePDFObjectStream" << endl;
+        // cout << std::string(depth, '.') << "ePDFObjectStream" << endl; // parser.GetPageObjectID(obj)
         parseObjectStream(parser, (PDFStreamInput*)obj, depth);
     }
     else {
@@ -846,9 +859,10 @@ void parse_stream_objects(){
 
 void parse_stream_objects2(){
     // string path = "../dsohowto.pdf";
-    string path = "../test_fu.pdf";   // openoffice 
+    // string path = "../test_fu.pdf";  // openoffice 
     // string path = "../test_fu_aaa.pdf";  // google docs
-    cout << path <<endl;
+    string path = "../test_fu_2page.pdf";
+    // cout << path <<endl;
 
     PDFParser parser;
     InputFile pdfFile;
@@ -864,10 +878,16 @@ void parse_stream_objects2(){
     }
     
     // Parse page object
-    RefCountPtr<PDFDictionary> page(parser.ParsePage(0));
+    RefCountPtr<PDFDictionary> page(parser.ParsePage(1));
     RefCountPtr<PDFObject> contents(parser.QueryDictionaryObject(page.GetPtr(),"Contents"));
 
+    // cout << contents->scPDFObjectTypeLabel(contents->GetType()) <<endl;
+    // parseObjectStream(parser, (PDFStreamInput*)contents.GetPtr(), 0);
+    
     parsePDFDictionary(parser, page.GetPtr(), 0);
+
+
+
         
 }
     
