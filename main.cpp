@@ -533,7 +533,7 @@ void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
         PDFObject* obj = it.GetValue();
 
         cout << "name " << name->GetValue() << endl;
-        if (name->GetValue().compare("Parent") == 0) return;  // avoid cycles
+        // if (name->GetValue().compare("Parent") == 0) return;  // avoid cycles
         
         if (obj->GetType() == PDFObject::ePDFObjectBoolean){
             cout << std::string(depth, '.') << "ePDFObjectBoolean" <<endl;
@@ -589,10 +589,10 @@ void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReferen
     depth++;
 
     // remove duplicates
-    // auto found = pageIds.find(object->mObjectID);
-    // if (found != pageIds.end()) return;
-    // cout << "+ID+" << object->mObjectID<<endl;
-    // pageIds.insert(object->mObjectID);
+    auto found = pageIds.find(object->mObjectID);
+    if (found != pageIds.end()) return;
+    cout << "+indirect ID+" << object->mObjectID<<endl;
+    pageIds.insert(object->mObjectID);
 
     PDFObject* obj = parser.ParseNewObject(object->mObjectID); // TODO: convert to RefCountPtr<PDFObject>
 
@@ -755,6 +755,7 @@ void parse_stream_objects(){
     // string path = "../dsohowto.pdf";
     string path = "../test_fu.pdf";   // openoffice 
     // string path = "../test_fu_aaa.pdf";  // google docs
+    // string path = "../test_fu_2page.pdf";
     cout << path <<endl;
 
     PDFParser parser;
@@ -775,92 +776,103 @@ void parse_stream_objects(){
     RefCountPtr<PDFObject> contents(parser.QueryDictionaryObject(page.GetPtr(),"Contents"));
     // content may be array or single (this assumes single stream)
 
-    cout << "content type: " << contents->scPDFObjectTypeLabel(contents->GetType()) << endl;
+    auto it = page.GetPtr()->GetIterator();
+    while(it.MoveNext()) {  
+        PDFName* name = it.GetKey();
+        PDFObject* obj = it.GetValue();
+        cout << "name " << name->GetValue() << endl;
+    }
+
+    // cout << "content type: " << contents->scPDFObjectTypeLabel(contents->GetType()) << endl;
 
     PDFStreamInput* inStream = (PDFStreamInput*)contents.GetPtr();
 
-    // Option 1 - parsing into Buffer (mostly to debug input)
-    IByteReader* streamReader = parser.CreateInputStreamReader(inStream);
-    int bufLen = 1;
-    Byte buffer[bufLen];
-    int index = 0;
-    if(streamReader) {
-        pdfFile.GetInputStream()->SetPosition(inStream->GetStreamContentStart());  // NOTE: need to set
-        while(streamReader->NotEnded()) {
-            // cout <<"AAAA"<<endl;
-            index++;
-            if (index == 177){  //177     //128 i  // 123 f
-                int a=1;
-            }
-            // buffer[0]={'\000'};
-            LongBufferSizeType readAmount = streamReader->Read(buffer, bufLen);
+    // // Option 1 - parsing into Buffer (mostly to debug input)
+    // IByteReader* streamReader = parser.CreateInputStreamReader(inStream);
+    // int bufLen = 1;
+    // Byte buffer[bufLen];
+    // int index = 0;
+    // if(streamReader) {
+    //     pdfFile.GetInputStream()->SetPosition(inStream->GetStreamContentStart());  // NOTE: need to set
+    //     while(streamReader->NotEnded()) {
+    //         // cout <<"AAAA"<<endl;
+    //         index++;
+    //         if (index == 177){  //177     //128 i  // 123 f
+    //             int a=1;
+    //         }
+    //         // buffer[0]={'\000'};
+    //         LongBufferSizeType readAmount = streamReader->Read(buffer, bufLen);
 
-            cout.write((const char*)buffer,readAmount);
-        }
-        // cout << "\n";
-    }
-    else {
-        cout << "Unable to read content stream\n";
-    }
-    delete streamReader;
+    //         cout.write((const char*)buffer,readAmount);
+    //     }
+    //     // cout << "\n";
+    // }
+    // else {
+    //     cout << "Unable to read content stream\n";
+    // }
+    // delete streamReader;
 
     
-    // // Option 2 - parsing using ObjectFromString
-    // PDFObjectParser* pp = parser.StartReadingObjectsFromStream(inStream);
-    // PDFObject *obj;
-    // while (obj=pp->ParseNewObject()){
-    //     if (obj->GetType() == PDFObject::ePDFObjectSymbol){
-    //         cout << obj->scPDFObjectTypeLabel(obj->GetType()) << " " << ((PDFSymbol*)obj)->GetValue() << endl;
-    //     }
-    //     else if (obj->GetType() == PDFObject::ePDFObjectArray){
-    //         PDFArray *arr = ((PDFArray*)obj);
-    //         int arrlen = arr->GetLength();
-    //         std::cout << "arrLen: " << arrlen<<std::endl;
-    //         if (arrlen == 0)
-    //             continue;
-    //         else{
-    //             SingleValueContainerIterator<PDFObjectVector> it = arr->GetIterator();
-    //             PDFObject* obj1 = it.GetItem();
-    //             // do {  // NOTE: with do while form first token is repeated twice.
-    //             while (it.MoveNext()){
-    //                 obj1 = it.GetItem();
-    //                 // Majority of cases is to handle Integer and LiteralString
-    //                 if (obj1->GetType() == PDFObject::ePDFObjectInteger){
-    //                     cout << "arr : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
-    //                 }
-    //                 else if (obj1->GetType() == PDFObject::ePDFObjectLiteralString){
-    //                     cout << "arr : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << ((PDFLiteralString*)obj1)->GetValue() <<endl;
-    //                 }
-    //                 else if (obj1->GetType() == PDFObject::ePDFObjectHexString){
-    //                     cout << "arr : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << ((PDFHexString*)obj1)->GetValue() <<endl;
-    //                 }
+    // Option 2 - parsing using ObjectFromString
+    PDFObjectParser* pp = parser.StartReadingObjectsFromStream(inStream);
+    PDFObject *obj;
+    while (obj=pp->ParseNewObject()){
+        if (obj->GetType() == PDFObject::ePDFObjectSymbol){
+            cout << obj->scPDFObjectTypeLabel(obj->GetType()) << " " << ((PDFSymbol*)obj)->GetValue() << endl;
+        }
+        else if (obj->GetType() == PDFObject::ePDFObjectArray){
+            PDFArray *arr = ((PDFArray*)obj);
+            int arrlen = arr->GetLength();
+            std::cout << "arrLen: " << arrlen<<std::endl;
+            if (arrlen == 0)
+                continue;
+            else{
+                SingleValueContainerIterator<PDFObjectVector> it = arr->GetIterator();
+                PDFObject* obj1 = it.GetItem();
+                // do {  // NOTE: with do while form first token is repeated twice.
+                while (it.MoveNext()){
+                    obj1 = it.GetItem();
+                    // Majority of cases is to handle Integer and LiteralString
+                    if (obj1->GetType() == PDFObject::ePDFObjectInteger){
+                        cout << "arr : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
+                    }
+                    else if (obj1->GetType() == PDFObject::ePDFObjectLiteralString){
+                        cout << "arr : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << ((PDFLiteralString*)obj1)->GetValue() <<endl;
+                    }
+                    else if (obj1->GetType() == PDFObject::ePDFObjectHexString){
+                        cout << "arr : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << (((PDFHexString*)obj1)->GetValue()).c_str() <<endl;
+                        std::string aaa = ((PDFHexString*)obj1)->GetValue();
+                        for( auto a : aaa)
+                            cout << int(a) << " ";
+                        cout <<endl;
+                    }
 
-    //                 else {
-    //                     cout << "arr other: " << obj1->scPDFObjectTypeLabel(obj1->GetType()) <<endl;
-    //                 }
-    //             }
-    //         }
-    //     }
+                    else {
+                        cout << "arr other: " << obj1->scPDFObjectTypeLabel(obj1->GetType()) <<endl;
+                    }
+                }
+            }
+        }
 
-    //     // else if (obj->GetType() == PDFObject::ePDFObjectInteger){
-    //     //     cout << "arr : "<<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : "  << ((PDFInteger*)obj)->GetValue() <<endl;
-    //     // }
+        // else if (obj->GetType() == PDFObject::ePDFObjectInteger){
+        //     cout << "arr : "<<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : "  << ((PDFInteger*)obj)->GetValue() <<endl;
+        // }
 
-    //     else if (obj->GetType() == PDFObject::ePDFObjectHexString){
-    //         cout << "hex : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFHexString*)obj)->GetValue() <<endl;
-    //     }
+        else if (obj->GetType() == PDFObject::ePDFObjectHexString){
+            cout << "hex : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFHexString*)obj)->GetValue() <<endl;
+        }
 
-    //     else{
-    //         cout << obj->scPDFObjectTypeLabel(obj->GetType()) << endl;
-    //     }
-    //  }
+        else{
+            cout << "other " << obj->scPDFObjectTypeLabel(obj->GetType()) << endl;
+        }
+     }
 }
 
 
 void parse_stream_objects2(){
     // string path = "../dsohowto.pdf";
-    // string path = "../test_fu.pdf";  // openoffice 
-    string path = "../test_fu_aaa.pdf";  // google docs
+    string path = "../test_fu.pdf";  // openoffice 
+    // string path = "../test_fu_aaa.pdf";  // google docs
     // string path = "../test_fu_2page.pdf";
     // cout << path <<endl;
 
@@ -882,10 +894,10 @@ void parse_stream_objects2(){
     RefCountPtr<PDFObject> contents(parser.QueryDictionaryObject(page.GetPtr(),"Contents"));
 
     // Alternative version of accessing a page
-    cout << "pageID: " << parser.GetPageObjectID(0) <<endl;
-    PDFObject* oo = parser.ParseNewObject(parser.GetPageObjectID(0));
-    cout << "aa " << oo->scPDFObjectTypeLabel(oo->GetType()) <<endl;
-    parsePDFDictionary(parser, (PDFDictionary*)oo, 0);
+    // cout << "pageID: " << parser.GetPageObjectID(0) <<endl;
+    // PDFObject* oo = parser.ParseNewObject(parser.GetPageObjectID(0));
+    // cout << "aa " << oo->scPDFObjectTypeLabel(oo->GetType()) <<endl;
+    // parsePDFDictionary(parser, (PDFDictionary*)oo, 0);
     
     // cout << contents->scPDFObjectTypeLabel(contents->GetType()) <<endl;
     // parseObjectStream(parser, (PDFStreamInput*)contents.GetPtr(), 0);
@@ -893,6 +905,22 @@ void parse_stream_objects2(){
     
     parsePDFDictionary(parser, page.GetPtr(), 0);
         
+}
+
+void parse_stream_objects3(){
+    // string path = "../dsohowto.pdf";
+    // string path = "../test_fu.pdf";  // openoffice 
+    string path = "../test_fu_aaa.pdf";  // google docs
+
+    PDFParser parser;
+    InputFile pdfFile;
+
+    EStatusCode status = pdfFile.OpenFile(path);
+    if(status != eSuccess) {
+        return ;
+    }
+
+    status = parser.StartPDFParsing(pdfFile.GetInputStream());
 }
     
 int main() {
@@ -902,9 +930,10 @@ int main() {
     // readin_original();
     // readin();
 
-    // parse_stream_objects();
-    parse_stream_objects2();
-
+    parse_stream_objects();
+    // parse_stream_objects2();
+    // parse_stream_objects3();
+    
     // testPage3();
 
 }
