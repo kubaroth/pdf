@@ -514,7 +514,9 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
         else if (obj->GetType() == PDFObject::ePDFObjectName){
             cout << "ObjectName : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFName*)obj)->GetValue() <<endl;
         }        
-
+        else if (obj->GetType() == PDFObject::ePDFObjectLiteralString){
+            cout << "litString : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFLiteralString*)obj)->GetValue() <<endl;
+        }
         else{
             cout << "other " << obj->scPDFObjectTypeLabel(obj->GetType()) << " : " <<  endl;
         }
@@ -837,7 +839,11 @@ void parse_stream_objects(){
     // string path = "../dsohowto.pdf";
     // string path = "../test_fu.pdf";   // openoffice
     // string path = "../test_fu_aaa.pdf";  // google docs
-    string path = "../test_fu_2page.pdf";
+    // string path = "../test_fu_2page.pdf";
+
+    // string path = "../test_ink.pdf";
+    string path = "../test_file.pdf";  // incorectly parsed 'file' string
+
     cout << path <<endl;
 
     PDFParser parser;
@@ -864,39 +870,7 @@ void parse_stream_objects(){
     // if found create a lookup table for each character.
     // This characters will be found by iterating each element of "Contents" array
     // where HexString entry will correcpond to the index of the table created previously
-    /* Example:
-       For string: 'DaD'
 
-       Symbol Tf
-       arrLen: 5
-       arr : HexString :  converted to int: 1
-       arr : Integer : -2 (horizontal offset, 1/1000th unit)
-       arr : HexString :  converted to int: 2
-       arr : Integer : 1 (horizontal offset)
-       arr : HexString :  converted to int: 1
-
-
-       Table:
-       Symbol beginbfchar
-       hex : HexString :
-       1
-       hex : HexString : D
-       0 68
-       hex : HexString :
-       2
-       hex : HexString : a
-       0 97
-       hex : HexString :
-       3
-       hex : HexString : C
-       0 67
-       ...
-       ...
-       Symbol endbfchar
-
-     */
-
-    
 
     auto it = page.GetPtr()->GetIterator();
     while(it.MoveNext()) {  
