@@ -30,3 +30,9 @@ target_link_libraries(a.out
   ${hummus_path}/lib/libLibJpeg.a
   ${hummus_path}/lib/libZlib.a
   )
+
+# Tests
+add_executable(test1
+  tests/main.cpp
+  tests/test1.cpp
+  )
