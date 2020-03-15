@@ -36,3 +36,13 @@ add_executable(test1
   tests/main.cpp
   tests/test1.cpp
   )
+
+target_link_libraries(test1
+  ${hummus_path}/lib/libPDFWriter.a
+  ${hummus_path}/lib/libFreeType.a
+  ${hummus_path}/lib/libLibAesgm.a
+  ${hummus_path}/lib/libLibPng.a
+  ${hummus_path}/lib/libLibTiff.a
+  ${hummus_path}/lib/libLibJpeg.a
+  ${hummus_path}/lib/libZlib.a
+  )
