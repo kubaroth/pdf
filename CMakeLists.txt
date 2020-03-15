@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.0.0)
 
-project(ttt)
+project(pdf_text_extraction)
 
 set (CMAKE_CXX_STANDARD 11)
+
+set(LOG OFF CACHE BOOL "Enable debug print statments" FORCE)
+if (LOG)
+  set(CXX_FLAGS "${CXX_FLAGS} -DLOG")
+endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # # Instruct CMake to run moc automatically when needed
