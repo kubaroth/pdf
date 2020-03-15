@@ -7,7 +7,7 @@ TEST_CASE ("Basic check"){
 
 TEST_CASE ("Read PDF"){
 
-    parse_page("../pdfs/test_fu.pdf", 0);
+    parse_page("../pdfs/test_openoffice.pdf", 0);
 
     cout << "g_sl.use_buffer_char: " << g_sl.use_buffer_char << " " << g_sl.bfchars.size() <<endl;
     cout << "g_sl.use_differences: " << g_sl.use_differences << " " << g_sl.differences_table.size() <<endl;

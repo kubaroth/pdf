@@ -2,14 +2,13 @@
 
 int main() {
 
-    // string path = "../pdfs/dsohowto.pdf";
-    // string path = "../pdfs/test_fu.pdf";   // openoffice
-    // string path = "../pdfs/test_fu_aaa.pdf";  // google docs
+    // string path = "../pdfs/test_openoffice.pdf";   // openoffice
+    // string path = "../pdfs/test_google_dics.pdf";  // google docs
    
     // parse_page("../pdfs/dsohowto.pdf", 0);
-    parse_page("../pdfs/test_fu.pdf", 0);
-    // TODO: ff fi fl fg
-
+    // parse_page("../pdfs/test_openoffice.pdf", 0);
+    parse_page("../pdfs/ff_fi_fl_fg.pdf", 0);
+    
     cout <<"!!!!"<<endl;
     cout << "g_sl.use_buffer_char: " << g_sl.use_buffer_char << " " << g_sl.bfchars.size() <<endl;
     cout << "g_sl.use_differences: " << g_sl.use_differences << " " << g_sl.differences_table.size() <<endl;
