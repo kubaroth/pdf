@@ -10264,7 +10264,8 @@ namespace Catch {
 
     namespace Catch {
         void writeToDebugConsole( std::string const& text ) {
-            __android_log_write( ANDROID_LOG_DEBUG, "Catch", text.c_str() );
+            // Not linked on Termux
+            // __android_log_write( ANDROID_LOG_DEBUG, "Catch", text.c_str() );
         }
     }
 
