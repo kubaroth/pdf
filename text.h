@@ -54,16 +54,17 @@ using namespace PDFHummus;
 
 
 struct  SymbolLookup{
-    string bfchar_start = "beginbfchar"; //openoffice, google docs, inkspace use that.
-    string bfchar_end = "endbfchar";
+    const string bfchar_start = "beginbfchar"; //openoffice, google docs, inkspace use that.
+    const string bfchar_end = "endbfchar";
     // TODO: current we are extracting symbol from the object named as Differences,
     // but this may change in the future - make it more configurable - perhaps
     // with a new edge case soon, this will require some changes.
     // Currnetly using dsohowto.pdf as a test case.
-    string resource_differences = "Differences";
-    bool record = false;
-    bool use_buffer_char = false; // for now assume we can use one or the other
-    bool use_differences = false;
+    const string resource_differences = "Differences";
+    bool record = false;  // Mark enable when traversing the 'use_differences' section
+    // For now let's assume we can use one or the other
+    bool use_buffer_char = false;  // Option 1: strings stored in a stream + some symbol lookup
+    bool use_differences = false;  // Option 2:  stored in dictionary 
     // PDFArray * array;
     vector<string> differences_table;
     vector<string> bfchars;
@@ -160,6 +161,7 @@ void parseObjectReal(PDFParser &parser, PDFReal *obj, int depth){
 #endif
 }
 
+/// Option 1 Handles one way of axtraction strings
 void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
     depth++;
     PDFDictionary* obj1 = object->QueryStreamDictionary();
@@ -171,15 +173,14 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
 #ifdef LOG
     cout << "content type: " << object->scPDFObjectTypeLabel(object->GetType()) << endl;
 #endif
-    PDFStreamInput* inStream = (PDFStreamInput*)object;//contents.GetPtr();
-
-    int index = 0;
+    PDFStreamInput* inStream = (PDFStreamInput*)object;
 
     PDFObjectParser* pp = parser.StartReadingObjectsFromStream(inStream);
     PDFObject *obj;
+
+    // Start parsing objects from a stream
     while (obj=pp->ParseNewObject()){
-        index++;
-        // cout << "parsing stream " << obj <<endl;
+
         if (obj->GetType() == PDFObject::ePDFObjectSymbol){
 #ifdef LOG
             cout << obj->scPDFObjectTypeLabel(obj->GetType()) << " " << ((PDFSymbol*)obj)->GetValue() << endl;
@@ -187,6 +188,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             string symbolVal = ((PDFSymbol*)obj)->GetValue();
             // cout << "symbolVal: " << symbolVal <<endl;
 
+            // Option 1 if the bfchar token is encountered
             if (symbolVal.compare(g_sl.bfchar_start) == 0){
                 g_sl.record = true;
             }
@@ -194,6 +196,9 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                 g_sl.record = false;
             }
         }
+
+        // TODO: Not sure - but looks like this is not used at the moment
+        //       or at least tested pdfs are not in this format
         else if (obj->GetType() == PDFObject::ePDFObjectArray){
             PDFArray *arr = ((PDFArray*)obj);
             int arrlen = arr->GetLength();
@@ -205,7 +210,8 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                 // do {  // NOTE: with do while form first token is repeated twice.
                 while (it.MoveNext()){
                     obj1 = it.GetItem();
-                    // Majority of cases is to handle Integer and LiteralString
+                    // These are majority of cases to handle Integer and LiteralString
+                    // TODO: add remaining
                     if (obj1->GetType() == PDFObject::ePDFObjectInteger){
 #ifdef LOG
                         cout << "arr : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
@@ -245,6 +251,8 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
         //     cout << "arr : "<<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : "  << ((PDFInteger*)obj)->GetValue() <<endl;
         // }
 
+
+        // Option 1 : parse HexStrings
         else if (obj->GetType() == PDFObject::ePDFObjectHexString){
 #ifdef LOG
             cout << "hex : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFHexString*)obj)->GetValue()  << "  +++  " << pp->DecodeHexString(((PDFHexString*)obj)->GetValue()) << endl;
@@ -431,6 +439,7 @@ void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
 #ifdef LOG
             cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
 #endif
+            // Option 2
             if (name->GetValue().compare(g_sl.resource_differences) == 0) {
                 g_sl.add_table((PDFArray*)obj);
             }
