@@ -58,6 +58,7 @@ using namespace PDFHummus;
 struct  SymbolLookup{
     const string bfchar_start = "beginbfchar"; //openoffice, google docs, inkspace use that.
     const string bfchar_end = "endbfchar";
+    int bfchars_index = 0;  //used take modulo of the value and  0: set as key, or value otherwise
     // TODO: current we are extracting symbol from the object named as Differences,
     // but this may change in the future - make it more configurable - perhaps
     // with a new edge case soon, this will require some changes.
@@ -66,10 +67,15 @@ struct  SymbolLookup{
     bool record = false;  // Mark enable when traversing the 'use_differences' section
     // For now let's assume we can use one or the other
     bool use_buffer_char = false;  // Option 1: strings stored in a stream + some symbol lookup
-    bool use_differences = false;  // Option 2: (hex strings) stored in dictionary 
+    bool use_differences = false;  // Option 2: (hex strings) stored in dictionary
+
+
     // PDFArray * array;
     vector<string> differences_table; // this is a symbol table
     vector<string> bfchars;   // Option 2 text data
+
+    map<int, string> map_bfchars;   // Option 2 text data
+    tuple<int, string, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
 
     void add_table(PDFArray * array){
         use_differences = true;
@@ -91,9 +97,39 @@ struct  SymbolLookup{
             }
         }
     }
+    int convert_symbol_int(const std::string symbol_key) const {
+        int abc = std::stoi("001", 0, 10);
+        return abc;
+    }
+    std::string convert_symbol_str(const std::string symbol_key) const {
+        return "abc";
+    }
+
     void add_bfchars(string _s){
-        use_buffer_char = true;
+        use_buffer_char = true;  // mark the mode pdf data is stored
+        // TODO: we want to store key:value map instead of list
+        // keep track of modulo to set key or value
         bfchars.push_back(_s);
+        if (bfchars_index%2 == 0){
+            convert_symbol_int(_s);
+            // TODO first entry to the pair, remove \001
+            // symbol_pair = {std::stoi
+            char ddd = _s[0];  // \001
+            symbol_pair = {stoi("333"), "AAA" , bfchars_index};
+        }
+        else {
+            convert_symbol_str(_s);
+            // only add if there are consecutive indices
+            if ( std::get<2>(symbol_pair) + 1  == bfchars_index){
+                // TODO \000B -> B
+                std::string aaa = "q11";
+                pair<int,string> new_pair = {std::get<0>(symbol_pair), "123"};
+                map_bfchars.insert(new_pair);
+            }
+
+        }
+
+        bfchars_index++;
     }
 
     void print_bfchars() const {
@@ -131,7 +167,6 @@ void parseObjectInteger(PDFParser &parser, PDFInteger *obj, int depth){
 void parseObjectLiteralStr(PDFParser &parser, PDFLiteralString *obj, int depth){
     depth++;
     if (LOG) cout << std::string(depth, ' ') << " [literalStr]: " << obj->GetValue() <<endl;
-
 }
 
 void parseObjectBoolean(PDFParser &parser, PDFBoolean *obj, int depth){
@@ -210,17 +245,17 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                         if (LOG) cout << "arr (hex) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << (((PDFHexString*)obj1)->GetValue()).c_str() <<" +++  " << pp->DecodeHexString(((PDFHexString*)obj1)->GetValue()) << endl;
                         auto hs = (PDFHexString*)obj1;
                         std::string symbol_key = hs->GetValue();
+                        g_symLookup.convert_symbol_str(symbol_key);
 
-                        
                         // TODO: need to look up character in already build symbol table
                         //       and store the value.
 
-                        cout << "Extract text data: " << symbol_key <<endl; // \001\001\001\002 , \003
+                        cout << "Extract text data: " << symbol_key << endl; // \001\001\001\002 , \003
                         // TODO: g_symLookup.bfchars   "\001" -> "\000B"
                         //       \002 -> "\000 "
                         // TODO: g_symLookup.bfchars needs to be a map
                         // NOTE: the input text is most likely unicde - we will cut corner and assume ascii
-                        
+
                         // cout << *aaa.c_str() << endl;
                         // for( auto a : aaa)
                         //     cout << (int)a << " ";
@@ -386,9 +421,7 @@ void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
             parseObjectName(parser, (PDFName*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectInteger){
-#ifdef LOG
-            cout << std::string(depth, '.') << "ePDFObjectInteger" << endl;
-#endif
+            if (LOG) cout << std::string(depth, '.') << "ePDFObjectInteger" << endl;
             parseObjectInteger(parser, (PDFInteger*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectReal){
@@ -397,7 +430,7 @@ void parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
         }
         else if (obj->GetType() == PDFObject::ePDFObjectArray){
             if (LOG) cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
-            // Option 2
+            // Option 2 (symbol lookup table)
             if (name->GetValue().compare(g_symLookup.resource_differences) == 0) {
                 g_symLookup.add_table((PDFArray*)obj);
             }
