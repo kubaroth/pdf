@@ -66,10 +66,10 @@ struct  SymbolLookup{
     bool record = false;  // Mark enable when traversing the 'use_differences' section
     // For now let's assume we can use one or the other
     bool use_buffer_char = false;  // Option 1: strings stored in a stream + some symbol lookup
-    bool use_differences = false;  // Option 2: stored in dictionary 
+    bool use_differences = false;  // Option 2: (hex strings) stored in dictionary 
     // PDFArray * array;
-    vector<string> differences_table;
-    vector<string> bfchars;
+    vector<string> differences_table; // this is a symbol table
+    vector<string> bfchars;   // Option 2 text data
 
     void add_table(PDFArray * array){
         use_differences = true;
@@ -96,11 +96,13 @@ struct  SymbolLookup{
         bfchars.push_back(_s);
     }
 
-    void print_bfchars(){
+    void print_bfchars() const {
+        int index = 0;
         for (auto it=bfchars.begin(); it!=bfchars.end(); it=it+2){ // store only values
             auto _key = *it;
             auto _value = *(it+1);
-            cout << _key << " -- "<< _value <<endl;
+            cout << "index:" << index  << " key:" << _key << " value:  "<< _value <<endl;
+            index++;
         }
     }
 };
@@ -180,9 +182,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                 g_symLookup.record = false;
             }
         }
-
-        // TODO: Not sure - but looks like this is not used at the moment
-        //       or at least tested pdfs are not in this format
+        // Option 1 (using stream)
         else if (obj->GetType() == PDFObject::ePDFObjectArray){
             PDFArray *arr = ((PDFArray*)obj);
             int arrlen = arr->GetLength();
@@ -195,17 +195,32 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                 while (it.MoveNext()){
                     obj1 = it.GetItem();
                     // These are majority of cases to handle Integer and LiteralString
-                    // TODO: add remaining
+                    // used in the text stream
+                    // int: is offset positioning 0.001 mm (check pdf reference)
+                    // Literal string: is the (word) inside parenthesis
+                    // TODO: store data
                     if (obj1->GetType() == PDFObject::ePDFObjectInteger){
-                        if (LOG) cout << "arr : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
+                        if (LOG) cout << "arr (int) : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
                     }
                     else if (obj1->GetType() == PDFObject::ePDFObjectLiteralString){
-                        if (LOG )cout << "arr : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << ((PDFLiteralString*)obj1)->GetValue() <<endl;
+                        if (LOG )cout << "arr (str) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << ((PDFLiteralString*)obj1)->GetValue() <<endl;
                     }
+                    // Option 2 : hexstrings (bginfchar/endbfchar)
                     else if (obj1->GetType() == PDFObject::ePDFObjectHexString){
-                        if (LOG) cout << "arr : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << (((PDFHexString*)obj1)->GetValue()).c_str() <<" +++  " << pp->DecodeHexString(((PDFHexString*)obj1)->GetValue()) << endl;
+                        if (LOG) cout << "arr (hex) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << (((PDFHexString*)obj1)->GetValue()).c_str() <<" +++  " << pp->DecodeHexString(((PDFHexString*)obj1)->GetValue()) << endl;
                         auto hs = (PDFHexString*)obj1;
-                        std::string aaa = hs->GetValue();
+                        std::string symbol_key = hs->GetValue();
+
+                        
+                        // TODO: need to look up character in already build symbol table
+                        //       and store the value.
+
+                        cout << "Extract text data: " << symbol_key <<endl; // \001\001\001\002 , \003
+                        // TODO: g_symLookup.bfchars   "\001" -> "\000B"
+                        //       \002 -> "\000 "
+                        // TODO: g_symLookup.bfchars needs to be a map
+                        // NOTE: the input text is most likely unicde - we will cut corner and assume ascii
+                        
                         // cout << *aaa.c_str() << endl;
                         // for( auto a : aaa)
                         //     cout << (int)a << " ";
@@ -226,19 +241,14 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
         // }
 
 
-        // Option 1 : parse HexStrings
+        // Option 2 : parse HexStrings
         else if (obj->GetType() == PDFObject::ePDFObjectHexString){
             if (LOG) cout << "hex : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFHexString*)obj)->GetValue()  << "  +++  " << pp->DecodeHexString(((PDFHexString*)obj)->GetValue()) << endl;
             auto hs = (PDFHexString*)obj;
-            std::string aaa = hs->GetValue();
-
-            // for( auto a : aaa)
-            //     cout << int(a) << " ";
-            // cout <<endl;
-
             // store consecutive values as key-values
+            // The mapping will be somthing along this lines "\001" -> "\000B" is is unicode?
             if (g_symLookup.record) {
-                g_symLookup.add_bfchars(aaa);
+                g_symLookup.add_bfchars(hs->GetValue());
             }
         }
         else if (obj->GetType() == PDFObject::ePDFObjectName){
@@ -470,6 +480,7 @@ void parse_page(string document_path, int page_number){
 
     EStatusCode status = pdfFile.OpenFile(document_path);
     if(status != eSuccess) {
+        cout << "No Document Found..." << endl;
         return ;
     }
 
@@ -517,14 +528,15 @@ void parse_page(string document_path, int page_number){
                 parseObjectStream(parser, inStream, 0);
             }
         // If not there is another method to store and reference symbols
-            assert ((g_symLookup.use_buffer_char == true) || (g_symLookup.use_differences == true));
+            // assert ((g_symLookup.use_buffer_char == true) || (g_symLookup.use_differences == true));
         }
     };
 
     // Parse page object
     RefCountPtr<PDFDictionary> page(parser.ParsePage(page_number));
+    cout << "parsing Resource..." <<endl;
     Impl::parseSection(parser, page, "Resources");
-    cout << "================================" <<endl;
+    cout << "parsing Contents..." <<endl;
     Impl::parseSection(parser, page, "Contents");
 
 }
