@@ -44,6 +44,7 @@
 
 #include <set>
 #include <cassert>
+#include <memory>
 
 static std::set<ObjectIDType>pageIds;  // TODO: temp structure to remove duplicates of indirectRefs objects
 
@@ -56,6 +57,9 @@ using namespace PDFHummus;
 
 
 struct  SymbolLookup{
+
+    enum ReadResult {file_found, file_not_found, no_stream };
+
     const string bfchar_start = "beginbfchar"; //openoffice, google docs, inkspace use that.
     const string bfchar_end = "endbfchar";
     int bfchars_index = 0;  //used take modulo of the value and  0: set as key, or value otherwise
@@ -64,11 +68,12 @@ struct  SymbolLookup{
     // with a new edge case soon, this will require some changes.
     // Currnetly using dsohowto.pdf as a test case.
     const string resource_differences = "Differences";
+   
     bool record = false;  // Mark enable when traversing the 'use_differences' section
     // For now let's assume we can use one or the other
     bool use_buffer_char = false;  // Option 1: strings stored in a stream + some symbol lookup
     bool use_differences = false;  // Option 2: (hex strings) stored in dictionary
-
+    ReadResult result;
 
     // PDFArray * array;
     vector<string> differences_table; // this is a symbol table
@@ -80,6 +85,9 @@ struct  SymbolLookup{
     // text data from a stream converted to text
     // TODO: later we want to add control: position in line, font size, font, bbox?
     vector<string> text_data;
+
+    // required assignment operator to handle const members
+    SymbolLookup& operator=(const SymbolLookup& other) {return *this;}
     
     void add_table(PDFArray * array){
         use_differences = true;
@@ -137,7 +145,7 @@ struct  SymbolLookup{
 };
 
 // TODO: should be singleton
-static SymbolLookup g_symLookup;
+SymbolLookup g_symLookup;
 
 
 // Forward declaration
@@ -488,23 +496,27 @@ void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReferen
     }
 }
 
-void parse_page(string document_path, int page_number){
+SymbolLookup& parse_page(string document_path, int page_number){
 
     cout << "Extracting text from: " <<  document_path << " page: "<< page_number << endl;
 
     PDFParser parser;
     InputFile pdfFile;
+    auto symLookup = make_shared<SymbolLookup>();
 
     EStatusCode status = pdfFile.OpenFile(document_path);
     if(status != eSuccess) {
         cout << "No Document Found..." << endl;
-        return ;
+        g_symLookup.result = SymbolLookup::file_not_found;
+        return g_symLookup;
     }
 
     status = parser.StartPDFParsing(pdfFile.GetInputStream());
     if(status != eSuccess) {
-        return;
+        g_symLookup.result = SymbolLookup::no_stream;
+        return g_symLookup;
     }
+    g_symLookup.result = SymbolLookup::file_found;
 
     struct Impl {
         /// Print top level keys of the page
@@ -544,7 +556,7 @@ void parse_page(string document_path, int page_number){
                 PDFStreamInput* inStream = (PDFStreamInput*)page_section.GetPtr();
                 parseObjectStream(parser, inStream, 0);
             }
-        // If not there is another method to store and reference symbols
+            // If not there is another method to store and reference symbols
             // assert ((g_symLookup.use_buffer_char == true) || (g_symLookup.use_differences == true));
         }
     };
@@ -556,4 +568,5 @@ void parse_page(string document_path, int page_number){
     cout << "parsing Contents..." <<endl;
     Impl::parseSection(parser, page, "Contents");
 
+    return g_symLookup;
 }

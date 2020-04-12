@@ -25,3 +25,17 @@ TEST_CASE ("Read PDF"){
     REQUIRE( g_symLookup.bfchars.size() == 24 );
 
 }
+
+TEST_CASE ("test_openoffice.pdf"){
+
+    parse_page("../pdfs/test_openoffice.pdf", 0);
+    REQUIRE( 1 == 1 );
+
+    cout <<g_symLookup.map_bfchars['\001'] << endl; // 'B'
+    cout <<g_symLookup.map_bfchars['\002'] << endl; // ' '
+    cout <<g_symLookup.map_bfchars['\003'] << endl; // 'A'
+    for (auto &text : g_symLookup.text_data)
+        cout << text;
+    cout << endl;
+
+}
