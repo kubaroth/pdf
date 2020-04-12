@@ -20,4 +20,13 @@ int main() {
     if (g_symLookup.use_buffer_char) {
         g_symLookup.print_bfchars();
     }
+
+    cout << "testing test_openoffice.pdf:" << endl;
+    cout <<g_symLookup.map_bfchars['\001'] << endl; // 'B'
+    cout <<g_symLookup.map_bfchars['\002'] << endl; // ' '
+    cout <<g_symLookup.map_bfchars['\003'] << endl; // 'A'
+    for (auto &text : g_symLookup.text_data)
+        cout << text;
+    cout << endl;
+    
 }

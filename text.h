@@ -74,9 +74,13 @@ struct  SymbolLookup{
     vector<string> differences_table; // this is a symbol table
     vector<string> bfchars;   // Option 2 text data
 
-    map<int, string> map_bfchars;   // Option 2 text data
-    tuple<int, string, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
+    map<char, char> map_bfchars;   // Option 2 text data
+    tuple<char, char, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
 
+    // text data from a stream converted to text
+    // TODO: later we want to add control: position in line, font size, font, bbox?
+    vector<string> text_data;
+    
     void add_table(PDFArray * array){
         use_differences = true;
 
@@ -97,13 +101,6 @@ struct  SymbolLookup{
             }
         }
     }
-    int convert_symbol_int(const std::string symbol_key) const {
-        int abc = std::stoi("001", 0, 10);
-        return abc;
-    }
-    std::string convert_symbol_str(const std::string symbol_key) const {
-        return "abc";
-    }
 
     void add_bfchars(string _s){
         use_buffer_char = true;  // mark the mode pdf data is stored
@@ -111,19 +108,15 @@ struct  SymbolLookup{
         // keep track of modulo to set key or value
         bfchars.push_back(_s);
         if (bfchars_index%2 == 0){
-            convert_symbol_int(_s);
-            // TODO first entry to the pair, remove \001
-            // symbol_pair = {std::stoi
-            char ddd = _s[0];  // \001
-            symbol_pair = {stoi("333"), "AAA" , bfchars_index};
+            assert (_s.size() == 1);  // TODO: assumption this is a 'char'  // \001
+            char key_char = _s[0];
+            symbol_pair = {key_char, 'a' , bfchars_index};
         }
         else {
-            convert_symbol_str(_s);
             // only add if there are consecutive indices
             if ( std::get<2>(symbol_pair) + 1  == bfchars_index){
-                // TODO \000B -> B
-                std::string aaa = "q11";
-                pair<int,string> new_pair = {std::get<0>(symbol_pair), "123"};
+                assert (_s.size() == 2);    // TODO: the size is 2   "\000B"
+                pair<char,char> new_pair = {std::get<0>(symbol_pair), _s[1]};
                 map_bfchars.insert(new_pair);
             }
 
@@ -233,7 +226,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     // used in the text stream
                     // int: is offset positioning 0.001 mm (check pdf reference)
                     // Literal string: is the (word) inside parenthesis
-                    // TODO: store data
+                    // TODO: store data (keep acumulate for now)
                     if (obj1->GetType() == PDFObject::ePDFObjectInteger){
                         if (LOG) cout << "arr (int) : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
                     }
@@ -244,22 +237,13 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     else if (obj1->GetType() == PDFObject::ePDFObjectHexString){
                         if (LOG) cout << "arr (hex) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << (((PDFHexString*)obj1)->GetValue()).c_str() <<" +++  " << pp->DecodeHexString(((PDFHexString*)obj1)->GetValue()) << endl;
                         auto hs = (PDFHexString*)obj1;
-                        std::string symbol_key = hs->GetValue();
-                        g_symLookup.convert_symbol_str(symbol_key);
-
-                        // TODO: need to look up character in already build symbol table
-                        //       and store the value.
-
-                        cout << "Extract text data: " << symbol_key << endl; // \001\001\001\002 , \003
-                        // TODO: g_symLookup.bfchars   "\001" -> "\000B"
-                        //       \002 -> "\000 "
-                        // TODO: g_symLookup.bfchars needs to be a map
-                        // NOTE: the input text is most likely unicde - we will cut corner and assume ascii
-
-                        // cout << *aaa.c_str() << endl;
-                        // for( auto a : aaa)
-                        //     cout << (int)a << " ";
-                        // cout <<endl;
+                        std::string lookup_key_seq = hs->GetValue();
+                        // iterate and lookup up each key
+                        string text = "";  // TODO keep accumulate for now
+                        for (auto &_char : lookup_key_seq){
+                            text += g_symLookup.map_bfchars[_char];
+                        }
+                        g_symLookup.text_data.push_back(text);
                     }
                     else if (obj1->GetType() == PDFObject::ePDFObjectSymbol){
                         if (LOG) cout << "Symbol: " << obj1->scPDFObjectTypeLabel(obj1->GetType()) << ((PDFSymbol*)obj1)->GetValue() <<  endl;
