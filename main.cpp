@@ -7,11 +7,12 @@ int main() {
    
     // parse_page("../dsohowto.pdf", 0);
 
-    auto symLookup= parse_page("non_exist_pdf", 0);
-    cout << "read result1:"<< symLookup.result <<endl;
+    auto textDataPtr = parse_page("non_exist_pdf", 0);
+    cout << "NULL: " << (textDataPtr == nullptr) <<endl;
 
-    symLookup = parse_page("../pdfs/test_openoffice.pdf", 0);
-    cout << "read result2:"<< symLookup.result <<endl;
+    textDataPtr = parse_page("../pdfs/test_openoffice.pdf", 0);
+    cout << "read result2:"<< textDataPtr->text <<endl;
+
     // parse_page("../pdfs/ff_fi_fl_fg.pdf", 0);
     
     cout << "g_symLookup.use_buffer_char: " << g_symLookup.use_buffer_char << " " << g_symLookup.bfchars.size() <<endl;

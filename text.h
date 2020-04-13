@@ -51,9 +51,13 @@ static std::set<ObjectIDType>pageIds;  // TODO: temp structure to remove duplica
 using namespace std;
 using namespace PDFHummus;
 
-#define LOG 1
+#define LOG 0 // 0: no output, 1:more 2:all
 
 ///////////////////  Parsing a page
+struct TextData {
+    std::string text = "";
+
+};
 
 
 struct  SymbolLookup{
@@ -83,11 +87,13 @@ struct  SymbolLookup{
     tuple<char, char, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
 
     // text data from a stream converted to text
-    // TODO: later we want to add control: position in line, font size, font, bbox?
-    vector<string> text_data;
+    // The data to be pulated is moved from externally initilized variable
+    unique_ptr<TextData> text_data;
 
     // required assignment operator to handle const members
-    SymbolLookup& operator=(const SymbolLookup& other) {return *this;}
+    SymbolLookup& operator=(const SymbolLookup& other) {
+        return *this;
+    }
     
     void add_table(PDFArray * array){
         use_differences = true;
@@ -144,8 +150,9 @@ struct  SymbolLookup{
     }
 };
 
-// TODO: should be singleton
-SymbolLookup g_symLookup;
+// using module visbility (static) as a shorthand
+// to avoid passing this around
+static SymbolLookup g_symLookup;
 
 
 // Forward declaration
@@ -251,7 +258,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                         for (auto &_char : lookup_key_seq){
                             text += g_symLookup.map_bfchars[_char];
                         }
-                        g_symLookup.text_data.push_back(text);
+                        g_symLookup.text_data->text += text;
                     }
                     else if (obj1->GetType() == PDFObject::ePDFObjectSymbol){
                         if (LOG) cout << "Symbol: " << obj1->scPDFObjectTypeLabel(obj1->GetType()) << ((PDFSymbol*)obj1)->GetValue() <<  endl;
@@ -496,27 +503,31 @@ void parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReferen
     }
 }
 
-SymbolLookup& parse_page(string document_path, int page_number){
+unique_ptr<TextData> parse_page(string document_path, int page_number){
 
     cout << "Extracting text from: " <<  document_path << " page: "<< page_number << endl;
 
     PDFParser parser;
     InputFile pdfFile;
-    auto symLookup = make_shared<SymbolLookup>();
+
+    // auto symLookup = make_shared<SymbolLookup>();
+
+    // g_symLookup(); // reinitialize on each parse page invocation;
+    
+    unique_ptr<TextData> textData( new TextData() );
+    g_symLookup = SymbolLookup();  
+    g_symLookup.text_data = std::move(textData);
 
     EStatusCode status = pdfFile.OpenFile(document_path);
     if(status != eSuccess) {
         cout << "No Document Found..." << endl;
-        g_symLookup.result = SymbolLookup::file_not_found;
-        return g_symLookup;
+        return nullptr;
     }
 
     status = parser.StartPDFParsing(pdfFile.GetInputStream());
     if(status != eSuccess) {
-        g_symLookup.result = SymbolLookup::no_stream;
-        return g_symLookup;
+        return nullptr;
     }
-    g_symLookup.result = SymbolLookup::file_found;
 
     struct Impl {
         /// Print top level keys of the page
@@ -568,5 +579,5 @@ SymbolLookup& parse_page(string document_path, int page_number){
     cout << "parsing Contents..." <<endl;
     Impl::parseSection(parser, page, "Contents");
 
-    return g_symLookup;
+    return std::move(g_symLookup.text_data);
 }
