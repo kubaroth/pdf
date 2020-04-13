@@ -62,8 +62,6 @@ struct TextData {
 
 struct  SymbolLookup{
 
-    enum ReadResult {file_found, file_not_found, no_stream };
-
     const string bfchar_start = "beginbfchar"; //openoffice, google docs, inkspace use that.
     const string bfchar_end = "endbfchar";
     int bfchars_index = 0;  //used take modulo of the value and  0: set as key, or value otherwise
@@ -77,9 +75,7 @@ struct  SymbolLookup{
     // For now let's assume we can use one or the other
     bool use_buffer_char = false;  // Option 1: strings stored in a stream + some symbol lookup
     bool use_differences = false;  // Option 2: (hex strings) stored in dictionary
-    ReadResult result;
 
-    // PDFArray * array;
     vector<string> differences_table; // this is a symbol table
     vector<string> bfchars;   // Option 2 text data
 
@@ -91,7 +87,13 @@ struct  SymbolLookup{
     unique_ptr<TextData> text_data;
 
     // required assignment operator to handle const members
+    SymbolLookup () {
+        bfchars_index = 0;
+    }
+
+    // required assignment operator to handle const members
     SymbolLookup& operator=(const SymbolLookup& other) {
+        bfchars_index = 0;
         return *this;
     }
     
@@ -130,8 +132,11 @@ struct  SymbolLookup{
             // only add if there are consecutive indices
             if ( std::get<2>(symbol_pair) + 1  == bfchars_index){
                 assert (_s.size() == 2);    // TODO: the size is 2   "\000B"
-                pair<char,char> new_pair = {std::get<0>(symbol_pair), _s[1]};
-                map_bfchars.insert(new_pair);
+
+                //pair<char,char> new_pair = {std::get<0>(symbol_pair), _s[1]};
+                // map_bfchars.insert(new_pair); // insertion is skipped on subsequent keys
+                map_bfchars[std::get<0>(symbol_pair)] = _s[1];
+                
             }
 
         }
