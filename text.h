@@ -51,7 +51,7 @@ static std::set<ObjectIDType>pageIds;  // TODO: temp structure to remove duplica
 using namespace std;
 using namespace PDFHummus;
 
-#define LOG 0 // 0: no output, 1:more 2:all
+#define LOG 0 // 0: no output, 1:more 2:more 3:all (currently disabled)
 
 ///////////////////  Parsing a page
 struct TextData {
@@ -124,7 +124,7 @@ struct  SymbolLookup{
         // keep track of modulo to set key or value
         bfchars.push_back(_s);
         if (bfchars_index%2 == 0){
-            assert (_s.size() == 1);  // TODO: assumption this is a 'char'  // \001
+            //assert (_s.size() == 1);  // TODO: assumption this is a 'char'  // \001
             char key_char = _s[0];
             symbol_pair = {key_char, 'a' , bfchars_index};
         }
