@@ -14,20 +14,15 @@ int main() {
     // cout << "read result2:"<< textDataPtr->text <<endl;
 
     textDataPtr = parse_page("../pdfs/test_google_docs.pdf", 0);
+    // cout << "read result3:"<< textDataPtr->text <<endl;
+
+    // textDataPtr = parse_page("../dsohowto.pdf", 0);
+    // cout << "read result3:"<< textDataPtr->text <<endl;
+
+    // textDataPtr = parse_page("../pdfs/abcdef.pdf", 0);
+    // cout << "read result3:"<< textDataPtr->text <<endl;
+
     
-    // parse_page("../pdfs/ff_fi_fl_fg.pdf", 0);
-    
-    cout << "g_symLookup.use_buffer_char: " << g_symLookup.use_buffer_char << " " << g_symLookup.bfchars.size() <<endl;
-    cout << "g_symLookup.use_differences: " << g_symLookup.use_differences << " " << g_symLookup.differences_table.size() <<endl;
-    if (g_symLookup.use_differences){
-        for (auto i=0; i<g_symLookup.differences_table.size(); ++i) {
-            cout << i << " -- " << g_symLookup.differences_table[i]  <<endl;
-        }
-    }
-    // Option 2 
-    if (g_symLookup.use_buffer_char) {
-        g_symLookup.print_bfchars();
-    }
     
     // cout << "testing test_openoffice.pdf:" << endl;
     // cout <<g_symLookup.map_bfchars['\001'] << endl; // 'B'

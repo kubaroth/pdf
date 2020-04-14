@@ -45,13 +45,14 @@
 #include <set>
 #include <cassert>
 #include <memory>
+#include <queue>
 
 static std::set<ObjectIDType>pageIds;  // TODO: temp structure to remove duplicates of indirectRefs objects
 
 using namespace std;
 using namespace PDFHummus;
 
-#define LOG 0 // 0: no output, 1:more 2:more 3:all (currently disabled)
+#define LOG 2 // 0: no output, 1:more 2:more 3:all (currently disabled)
 
 ///////////////////  Parsing a page
 struct TextData {
@@ -62,21 +63,36 @@ struct TextData {
 
 struct  SymbolLookup{
 
-    const string bfchar_start = "beginbfchar"; //openoffice, google docs, inkspace use that.
+    const string bfchar_start = "beginbfchar"; // using resouce dictionary lookup
     const string bfchar_end = "endbfchar";
     int bfchars_index = 0;  //used take modulo of the value and  0: set as key, or value otherwise
     // TODO: current we are extracting symbol from the object named as Differences,
     // but this may change in the future - make it more configurable - perhaps
     // with a new edge case soon, this will require some changes.
+
+    // TODO: another mode Td <-> Tj to lookup but add to char + 25 magic number
+    // (Looks like this is number of letters in A-Z)
+    /*
+      if hexstring is between symbols Tf <-> TJ - use lookup
+      if Td <-> Tj - dont lookup use offet
+      else not a hexString but some special characters (\002) may be
+
+    */
+
+
     // Currnetly using dsohowto.pdf as a test case.
     const string resource_differences = "Differences";
+
+    
    
     bool record = false;  // Mark enable when traversing the 'use_differences' section
     // For now let's assume we can use one or the other
     bool use_buffer_char = false;  // Option 1: strings stored in a stream + some symbol lookup
     bool use_differences = false;  // Option 2: (hex strings) stored in dictionary
 
-    vector<string> differences_table; // this is a symbol table
+    queue<PDFObject*> objectStack;
+    
+    vector<string> differences_table; // thiess is a symbol table
     vector<string> bfchars;   // Option 2 text data
 
     map<char, char> map_bfchars;   // Option 2 text data
@@ -131,11 +147,16 @@ struct  SymbolLookup{
         else {
             // only add if there are consecutive indices
             if ( std::get<2>(symbol_pair) + 1  == bfchars_index){
-                assert (_s.size() == 2);    // TODO: the size is 2   "\000B"
+                // assert (_s.size() <= 2);    // TODO: the size is 2   "\000B"
+
 
                 //pair<char,char> new_pair = {std::get<0>(symbol_pair), _s[1]};
                 // map_bfchars.insert(new_pair); // insertion is skipped on subsequent keys
-                map_bfchars[std::get<0>(symbol_pair)] = _s[1];
+                // if (_s.size() == 1)
+                //     map_bfchars[std::get<0>(symbol_pair)] = _s[0];
+                if (_s.size() == 2)
+                    map_bfchars[std::get<0>(symbol_pair)] = _s[1];
+
                 
             }
 
@@ -215,6 +236,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
     PDFObject *obj;
 
     // Start parsing objects from a stream
+    cout << "streamStart" << "-------" << endl;
     while (obj=pp->ParseNewObject()){
 
         if (obj->GetType() == PDFObject::ePDFObjectSymbol){
@@ -223,10 +245,10 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             // cout << "symbolVal: " << symbolVal <<endl;
 
             // Option 1 if the bfchar token is encountered
-            if (symbolVal.compare(g_symLookup.bfchar_start) == 0){
+            if (g_symLookup.bfchar_start.find(symbolVal) != string::npos){
                 g_symLookup.record = true;
             }
-            else if (symbolVal.compare(g_symLookup.bfchar_end) == 0){
+            else if (g_symLookup.bfchar_end.find(symbolVal) != string::npos){
                 g_symLookup.record = false;
             }
         }
@@ -253,7 +275,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     else if (obj1->GetType() == PDFObject::ePDFObjectLiteralString){
                         if (LOG>=2) cout << "arr (str) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << ((PDFLiteralString*)obj1)->GetValue() <<endl;
                     }
-                    // Option 2 : hexstrings (bginfchar/endbfchar)
+                    // Option 2 : hexstrings with table lookup only (bginfchar/endbfchar)
                     else if (obj1->GetType() == PDFObject::ePDFObjectHexString){
                         if (LOG>=2) cout << "arr (hex) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << (((PDFHexString*)obj1)->GetValue()).c_str() <<" +++  " << pp->DecodeHexString(((PDFHexString*)obj1)->GetValue()) << endl;
                         auto hs = (PDFHexString*)obj1;
@@ -286,8 +308,9 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             auto hs = (PDFHexString*)obj;
             // store consecutive values as key-values
             // The mapping will be somthing along this lines "\001" -> "\000B" is is unicode?
-            if (g_symLookup.record) {
-                g_symLookup.add_bfchars(hs->GetValue());
+            if (g_symLookup.record ) { // || g_symLookup.prevObject
+                string value = hs->GetValue();
+                g_symLookup.add_bfchars(value);
             }
         }
         else if (obj->GetType() == PDFObject::ePDFObjectName){
@@ -310,7 +333,8 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
         else{
             if (LOG>=2) cout << "other " << obj->scPDFObjectTypeLabel(obj->GetType()) << " : " <<  endl;
         }
-     }
+    }
+    cout << "streamEnd" << "--------" << endl;
 }
 
 void parseObjectSymbol(PDFParser &parser, PDFSymbol *obj, int depth){
