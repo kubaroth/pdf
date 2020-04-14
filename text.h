@@ -237,11 +237,17 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
 
     // Start parsing objects from a stream
     cout << "streamStart" << "-------" << endl;
+    pair<string,string> symbol_next = {"",""};
     while (obj=pp->ParseNewObject()){
-
+        // Handle Symbol objects
         if (obj->GetType() == PDFObject::ePDFObjectSymbol){
             if (LOG>=2) cout << obj->scPDFObjectTypeLabel(obj->GetType()) << " " << ((PDFSymbol*)obj)->GetValue() << endl;
             string symbolVal = ((PDFSymbol*)obj)->GetValue();
+
+            //store previously found symbol and the current one
+            symbol_next.first = symbol_next.second;
+            symbol_next.second = symbolVal;
+
             // cout << "symbolVal: " << symbolVal <<endl;
 
             // Option 1 if the bfchar token is encountered
@@ -288,7 +294,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                         g_symLookup.text_data->text += text;
                     }
                     else if (obj1->GetType() == PDFObject::ePDFObjectSymbol){
-                        if (LOG>=2) cout << "Symbol: " << obj1->scPDFObjectTypeLabel(obj1->GetType()) << ((PDFSymbol*)obj1)->GetValue() <<  endl;
+                        if (LOG>=2) cout << "Symbol:: " << obj1->scPDFObjectTypeLabel(obj1->GetType()) << ((PDFSymbol*)obj1)->GetValue() <<  endl;
                     }
                     else {
                         if (LOG>=2) cout << "arr other: " << obj1->scPDFObjectTypeLabel(obj1->GetType()) <<endl;
@@ -308,10 +314,20 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             auto hs = (PDFHexString*)obj;
             // store consecutive values as key-values
             // The mapping will be somthing along this lines "\001" -> "\000B" is is unicode?
-            if (g_symLookup.record ) { // || g_symLookup.prevObject
+            if (g_symLookup.record ) {
                 string value = hs->GetValue();
                 g_symLookup.add_bfchars(value);
             }
+            if (symbol_next.second.compare("Td") == 0){
+                string value = hs->GetValue();
+                //cout << "VV "<< value <<endl;
+                /*
+                  check symblo if in lookup table
+                  if not offset (add) char by 25
+                 */
+                
+            }
+            cout << "symbol_prev: " << symbol_next.first << "  symbol curr: " << symbol_next.second <<endl;
         }
         else if (obj->GetType() == PDFObject::ePDFObjectName){
             auto name = ((PDFName*)obj)->GetValue();
@@ -328,7 +344,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectSymbol){
-            if (LOG>=2) cout << "Symbol: " << obj1->scPDFObjectTypeLabel(obj->GetType()) << ((PDFSymbol*)obj)->GetValue() <<  endl;
+            if (LOG>=2) cout << "Symbol: " << obj->scPDFObjectTypeLabel(obj->GetType()) << ((PDFSymbol*)obj)->GetValue() <<  endl;
         }
         else{
             if (LOG>=2) cout << "other " << obj->scPDFObjectTypeLabel(obj->GetType()) << " : " <<  endl;
