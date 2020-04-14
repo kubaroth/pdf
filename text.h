@@ -70,16 +70,6 @@ struct  SymbolLookup{
     // but this may change in the future - make it more configurable - perhaps
     // with a new edge case soon, this will require some changes.
 
-    // TODO: another mode Td <-> Tj to lookup but add to char + 25 magic number
-    // (Looks like this is number of letters in A-Z)
-    /*
-      if hexstring is between symbols Tf <-> TJ - use lookup
-      if Td <-> Tj - dont lookup use offet
-      else not a hexString but some special characters (\002) may be
-
-    */
-
-
     // Currnetly using dsohowto.pdf as a test case.
     const string resource_differences = "Differences";
 
@@ -133,15 +123,18 @@ struct  SymbolLookup{
             }
         }
     }
-
+    /// if the bfchar symbol is encounterd add (index, character) pair to the lookup table
     void add_bfchars(string _s){
         use_buffer_char = true;  // mark the mode pdf data is stored
         // TODO: we want to store key:value map instead of list
         // keep track of modulo to set key or value
         bfchars.push_back(_s);
         if (bfchars_index%2 == 0){
-            //assert (_s.size() == 1);  // TODO: assumption this is a 'char'  // \001
-            char key_char = _s[0];
+            char key_char;
+            if (_s.size() == 1)
+                key_char= _s[0]; // NOTE: here key_string is single char
+            else
+                key_char= _s[1]; 
             symbol_pair = {key_char, 'a' , bfchars_index};
         }
         else {
@@ -149,17 +142,15 @@ struct  SymbolLookup{
             if ( std::get<2>(symbol_pair) + 1  == bfchars_index){
                 // assert (_s.size() <= 2);    // TODO: the size is 2   "\000B"
 
-
-                //pair<char,char> new_pair = {std::get<0>(symbol_pair), _s[1]};
-                // map_bfchars.insert(new_pair); // insertion is skipped on subsequent keys
                 // if (_s.size() == 1)
                 //     map_bfchars[std::get<0>(symbol_pair)] = _s[0];
-                if (_s.size() == 2)
+                if (_s.size() == 2){
                     map_bfchars[std::get<0>(symbol_pair)] = _s[1];
-
-                
+                }
+                else{
+                    cout << "WARNING: size of symbol different then 2:" << _s <<endl;
+                }
             }
-
         }
 
         bfchars_index++;
@@ -244,13 +235,13 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             if (LOG>=2) cout << obj->scPDFObjectTypeLabel(obj->GetType()) << " " << ((PDFSymbol*)obj)->GetValue() << endl;
             string symbolVal = ((PDFSymbol*)obj)->GetValue();
 
-            //store previously found symbol and the current one
+            // Record the current symbol and alter the logic of the
+            // next encounterd HexString in the Stream
+            
+            // Store the currnet one and previous symbol
             symbol_next.first = symbol_next.second;
             symbol_next.second = symbolVal;
 
-            // cout << "symbolVal: " << symbolVal <<endl;
-
-            // Option 1 if the bfchar token is encountered
             if (g_symLookup.bfchar_start.find(symbolVal) != string::npos){
                 g_symLookup.record = true;
             }
@@ -274,7 +265,6 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     // used in the text stream
                     // int: is offset positioning 0.001 mm (check pdf reference)
                     // Literal string: is the (word) inside parenthesis
-                    // TODO: store data (keep acumulate for now)
                     if (obj1->GetType() == PDFObject::ePDFObjectInteger){
                         if (LOG>=2) cout << "arr (int) : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
                     }
@@ -286,10 +276,14 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                         if (LOG>=2) cout << "arr (hex) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << (((PDFHexString*)obj1)->GetValue()).c_str() <<" +++  " << pp->DecodeHexString(((PDFHexString*)obj1)->GetValue()) << endl;
                         auto hs = (PDFHexString*)obj1;
                         std::string lookup_key_seq = hs->GetValue();
+
                         // iterate and lookup up each key
-                        string text = "";  // TODO keep accumulate for now
+                        // TODO: needs better handling - to only execute for string blocks
+                        string text = "";
                         for (auto &_char : lookup_key_seq){
-                            text += g_symLookup.map_bfchars[_char];
+                            if ( g_symLookup.map_bfchars.find(_char) != g_symLookup.map_bfchars.end()){
+                                text += g_symLookup.map_bfchars[_char];
+                            }
                         }
                         g_symLookup.text_data->text += text;
                     }
@@ -316,15 +310,39 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             // The mapping will be somthing along this lines "\001" -> "\000B" is is unicode?
             if (g_symLookup.record ) {
                 string value = hs->GetValue();
-                g_symLookup.add_bfchars(value);
+                // TODO: would be good to limit somhow what's get save - but don't know how to filterout
+                // add_bfchar uses [0] and [1] chars
+                if (value.size() <= 2) // some keys are "\001" but some "\000\003"
+                    g_symLookup.add_bfchars(value);
             }
+
             if (symbol_next.second.compare("Td") == 0){
                 string value = hs->GetValue();
-                //cout << "VV "<< value <<endl;
-                /*
-                  check symblo if in lookup table
-                  if not offset (add) char by 25
-                 */
+                int a =1 ;
+
+                if (value.size() == 2){  // so far seem like keys are alway char[2]
+                    // from two-char string extract second char:  \000\003
+                    // this can be a key in the lookup dictionary 
+                    char key = value[1]; // TODO: can't use string, let's drop leading \000
+                    char char_value;
+                    if ( g_symLookup.map_bfchars.find(key) != g_symLookup.map_bfchars.end()){
+                        char_value = g_symLookup.map_bfchars[key];
+                        // For (keys value) which which are not equal use that char without offet
+                        if (char_value != key) {
+                            g_symLookup.text_data->text += char_value;
+                        }
+                        else {
+                            key += 29;  // magic number
+                            g_symLookup.text_data->text += key;
+                        }
+                 
+                    }
+                    // Remaining majority not found in the lookup dictionary
+                    else{
+                        key += 29;  // magic number
+                        g_symLookup.text_data->text += key;
+                    }
+                }
                 
             }
             cout << "symbol_prev: " << symbol_next.first << "  symbol curr: " << symbol_next.second <<endl;

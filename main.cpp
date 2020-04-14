@@ -13,9 +13,12 @@ int main() {
     // textDataPtr = parse_page("../pdfs/test_openoffice.pdf", 0);
     // cout << "read result2:"<< textDataPtr->text <<endl;
 
-    textDataPtr = parse_page("../pdfs/test_google_docs.pdf", 0);
+    // textDataPtr = parse_page("../pdfs/test_google_docs.pdf", 0);
     // cout << "read result3:"<< textDataPtr->text <<endl;
 
+    textDataPtr = parse_page("../pdfs/test_inkspace.pdf", 0);
+    cout << "read result4:"<< textDataPtr->text <<endl;
+    
     // textDataPtr = parse_page("../dsohowto.pdf", 0);
     // cout << "read result3:"<< textDataPtr->text <<endl;
 
