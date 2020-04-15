@@ -321,15 +321,13 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             if (LOG>=2) cout << "hex : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFHexString*)obj)->GetValue()  << "  +++  " << pp->DecodeHexString(((PDFHexString*)obj)->GetValue()) << endl;
             auto hs = (PDFHexString*)obj;
             string value = hs->GetValue();
+
+            // Stream following "beginbfchar" symbol are key-value pairs "\001" -> "\000B"
+            // Store then in the lookup table
             
-            // store consecutive values as key-values
-            // The mapping will be somthing along this lines "\001" -> "\000B" is is unicode?
-            // if (g_symLookup.record ) {
+            // if (g_symLookup.record ) {  // TODO: cleanup - this is no longer needed
             if (symbol_next.second.compare("beginbfchar") == 0){
                 string value = hs->GetValue();
-                cout << "beginbfchar " << value <<endl;
-                // TODO: would be good to limit somhow what's get save - but don't know how to filterout
-                // add_bfchar uses [0] and [1] chars
                 if (value.size() <= 2) // some keys are "\001" but some "\000\003"
                     g_symLookup.add_bfchars(value);
             }
@@ -340,40 +338,38 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                 string value = hs->GetValue();
                 int a =1 ;
 
-                // NOTE: replace \n with space for now
+                // NOTE: Hanling new-line character
                 if ((value[0] == '\000') && (value[1] == '\001')){
                     g_symLookup.text_data->text += "\n";
                     // continue;
                 }
-                                
-                cout << "hexvalue: " <<  value <<endl;
-                if (value.size() == 2){  // so far seem like keys are alway char[2]
-                    // from two-char string extract second char:  \000\003
-                    // this can be a key in the lookup dictionary 
+
+                if (value.size() == 2){  // so far seem like keys are always 2bytes
+                    // We use second byte for lookup for now: extract second char:  \000\003
                     char key = value[1];
-                    string char_value;
-                    /*
+                    string string_value;
+
                     if ( g_symLookup.map_bfchars.find(key) != g_symLookup.map_bfchars.end()){
-                        char_value = g_symLookup.map_bfchars[key];
-                        // For (keys value) which which are not equal use that char without offet
-                        if (char_value[1] != key) { // TODO
-                            string char_string = char_value;
-                            g_symLookup.text_data->text += char_string;
+                        string_value = g_symLookup.map_bfchars[key];
+                        // For (keys value) which which are not equal
+                        // use that char without offet
+                        if (string_value[1] != key) {
+                            g_symLookup.text_data->text += string_value;
                         }
                         else {
-                            key += 29;  // magic number
-                            string key_string = key;
+                            key += 29;  // magic number, offset in ascii table
+                            string key_string(1, key);
                             g_symLookup.text_data->text += key_string;
                         }
                  
                     }
-                    // Remaining majority not found in the lookup dictionary
+                    // For remaining majority of keys not found in the lookup dictionary
                     else{
                         key += 29;  // magic number
-                        string key_string = key;
+                        string key_string(1,key);
                         g_symLookup.text_data->text += key_string;
                     }
-                    */
+                    
                 }
                 else{
                     string value = hs->GetValue();
