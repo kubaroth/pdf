@@ -129,6 +129,8 @@ struct  SymbolLookup{
         // TODO: we want to store key:value map instead of list
         // keep track of modulo to set key or value
         bfchars.push_back(_s);
+
+        
         if (bfchars_index%2 == 0){
             char key_char;
             if (_s.size() == 1)
@@ -140,15 +142,20 @@ struct  SymbolLookup{
         else {
             // only add if there are consecutive indices
             if ( std::get<2>(symbol_pair) + 1  == bfchars_index){
-                // assert (_s.size() <= 2);    // TODO: the size is 2   "\000B"
 
-                // if (_s.size() == 1)
-                //     map_bfchars[std::get<0>(symbol_pair)] = _s[0];
-                if (_s.size() == 2){
-                    map_bfchars[std::get<0>(symbol_pair)] = _s[1];
+                // handling ligatures ff, fi, fl (TODO: there are more...)
+                if ((_s[0] == '\373') && (_s[1] == '\000')) {
+                    // todo handle keys as \000\002 instead \002
+                    map_bfchars[std::get<0>(symbol_pair)] = 'f'; // ff -> can't use 'ff' as we use char
                 }
-                else{
-                    cout << "WARNING: size of symbol different then 2:" << _s <<endl;
+                else if ((_s[0] == '\373') && (_s[1] == '\001')) {
+                    map_bfchars[std::get<0>(symbol_pair)] = 'i'; // fi
+                }
+                else if ((_s[0] == '\373') && (_s[1] == '\002')) {
+                    map_bfchars[std::get<0>(symbol_pair)] = 'l'; // fl
+                }
+                else {
+                    map_bfchars[std::get<0>(symbol_pair)] = _s[1];
                 }
             }
         }
@@ -268,8 +275,13 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     if (obj1->GetType() == PDFObject::ePDFObjectInteger){
                         if (LOG>=2) cout << "arr (int) : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
                     }
+                    // inkspace
                     else if (obj1->GetType() == PDFObject::ePDFObjectLiteralString){
                         if (LOG>=2) cout << "arr (str) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << ((PDFLiteralString*)obj1)->GetValue() <<endl;
+                        if (symbol_next.second.compare("Tf") == 0){
+                            string text = ((PDFLiteralString*)obj1)->GetValue();
+                            g_symLookup.text_data->text += text;
+                        }
                     }
                     // Option 2 : hexstrings with table lookup only (bginfchar/endbfchar)
                     else if (obj1->GetType() == PDFObject::ePDFObjectHexString){
@@ -277,6 +289,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                         auto hs = (PDFHexString*)obj1;
                         std::string lookup_key_seq = hs->GetValue();
 
+                        // openoffice
                         // iterate and lookup up each key
                         // TODO: needs better handling - to only execute for string blocks
                         string text = "";
@@ -306,20 +319,33 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
         else if (obj->GetType() == PDFObject::ePDFObjectHexString){
             if (LOG>=2) cout << "hex : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFHexString*)obj)->GetValue()  << "  +++  " << pp->DecodeHexString(((PDFHexString*)obj)->GetValue()) << endl;
             auto hs = (PDFHexString*)obj;
+            string value = hs->GetValue();
+            
             // store consecutive values as key-values
             // The mapping will be somthing along this lines "\001" -> "\000B" is is unicode?
-            if (g_symLookup.record ) {
+            // if (g_symLookup.record ) {
+            if (symbol_next.second.compare("beginbfchar") == 0){
                 string value = hs->GetValue();
+                cout << "beginbfchar " << value <<endl;
                 // TODO: would be good to limit somhow what's get save - but don't know how to filterout
                 // add_bfchar uses [0] and [1] chars
                 if (value.size() <= 2) // some keys are "\001" but some "\000\003"
                     g_symLookup.add_bfchars(value);
             }
 
-            if (symbol_next.second.compare("Td") == 0){
+            else if ((symbol_next.second.compare("Td") == 0) ||
+                     (symbol_next.second.compare("Tf") == 0))  // ligatures
+                {
                 string value = hs->GetValue();
                 int a =1 ;
 
+                // NOTE: replace \n with space for now
+                if ((value[0] == '\000') && (value[1] == '\001')){
+                    g_symLookup.text_data->text += "\n";
+                    // continue;
+                }
+                                
+                cout << "hexvalue: " <<  value <<endl;
                 if (value.size() == 2){  // so far seem like keys are alway char[2]
                     // from two-char string extract second char:  \000\003
                     // this can be a key in the lookup dictionary 
@@ -343,8 +369,13 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                         g_symLookup.text_data->text += key;
                     }
                 }
+                else{
+                    string value = hs->GetValue();
+                    cout << "otherhex: " << value << endl;
+                }
                 
             }
+
             cout << "symbol_prev: " << symbol_next.first << "  symbol curr: " << symbol_next.second <<endl;
         }
         else if (obj->GetType() == PDFObject::ePDFObjectName){
@@ -356,6 +387,11 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
         }
         else if (obj->GetType() == PDFObject::ePDFObjectLiteralString){
             if (LOG>=2) cout << "litString : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFLiteralString*)obj)->GetValue() <<endl;
+            if (symbol_next.second.compare("Tf") == 0){
+                string text = ((PDFLiteralString*)obj)->GetValue();
+                g_symLookup.text_data->text += text;
+            }
+
         }
         else if (obj->GetType() == PDFObject::ePDFObjectDictionary){
             // if (LOG>=3) cout << std::string(depth, '.') << "(ePDFObjectDictionary)" << endl;  // 8

@@ -18,6 +18,9 @@ int main() {
 
     textDataPtr = parse_page("../pdfs/test_inkspace.pdf", 0);
     cout << "read result4:"<< textDataPtr->text <<endl;
+
+    // textDataPtr = parse_page("../pdfs/ink_ff_fi_fl_fg.pdf", 0);
+    // cout << "read result5:"<< textDataPtr->text <<endl;
     
     // textDataPtr = parse_page("../dsohowto.pdf", 0);
     // cout << "read result3:"<< textDataPtr->text <<endl;
