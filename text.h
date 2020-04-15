@@ -52,7 +52,11 @@ static std::set<ObjectIDType>pageIds;  // TODO: temp structure to remove duplica
 using namespace std;
 using namespace PDFHummus;
 
-#define LOG 2 // 0: no output, 1:more 2:more 3:all (currently disabled)
+// 0: no output
+// 1: main messages
+// 2: useful debug
+// 3: all (currently disabled, as these execution paths are not used)
+#define LOG 2
 
 ///////////////////  Parsing a page
 struct TextData {
@@ -154,6 +158,7 @@ struct  SymbolLookup{
                 else if ((_s[0] == '\373') && (_s[1] == '\002')) {
                     map_bfchars[std::get<0>(symbol_pair)] = "fl"; // fl
                 }
+                // handling regular characters
                 else {
                     string char_string(1, _s[1]);
                     map_bfchars[std::get<0>(symbol_pair)] = char_string;
@@ -276,7 +281,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     if (obj1->GetType() == PDFObject::ePDFObjectInteger){
                         if (LOG>=2) cout << "arr (int) : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
                     }
-                    // inkspace
+                    // LookupOption 2 - inkspace 
                     else if (obj1->GetType() == PDFObject::ePDFObjectLiteralString){
                         if (LOG>=2) cout << "arr (str) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << ((PDFLiteralString*)obj1)->GetValue() <<endl;
                         if (symbol_next.second.compare("Tf") == 0){
@@ -290,7 +295,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                         auto hs = (PDFHexString*)obj1;
                         std::string lookup_key_seq = hs->GetValue();
 
-                        // openoffice
+                        // LookupOption 1 - openoffice
                         // iterate and lookup up each key
                         // TODO: needs better handling - to only execute for string blocks
                         string text = "";
@@ -322,6 +327,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             auto hs = (PDFHexString*)obj;
             string value = hs->GetValue();
 
+            // Build Lookup-Table
             // Stream following "beginbfchar" symbol are key-value pairs "\001" -> "\000B"
             // Store then in the lookup table
             
@@ -336,7 +342,6 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                      (symbol_next.second.compare("Tf") == 0))  // ligatures
                 {
                 string value = hs->GetValue();
-                int a =1 ;
 
                 // NOTE: Hanling new-line character
                 if ((value[0] == '\000') && (value[1] == '\001')){
@@ -344,6 +349,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     // continue;
                 }
 
+                // LookupOption(3) - googledocs + ligatures
                 if (value.size() == 2){  // so far seem like keys are always 2bytes
                     // We use second byte for lookup for now: extract second char:  \000\003
                     char key = value[1];
@@ -351,8 +357,8 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
 
                     if ( g_symLookup.map_bfchars.find(key) != g_symLookup.map_bfchars.end()){
                         string_value = g_symLookup.map_bfchars[key];
-                        // For (keys value) which which are not equal
-                        // use that char without offet
+                        // For (key, value) which which are not equal use that char without offet
+                        // NOTE: This include ligatures lookup.
                         if (string_value[1] != key) {
                             g_symLookup.text_data->text += string_value;
                         }
@@ -363,7 +369,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                         }
                  
                     }
-                    // For remaining majority of keys not found in the lookup dictionary
+                    // For remaining majority of keys (googledocs document) not found in the lookup dictionary
                     else{
                         key += 29;  // magic number
                         string key_string(1,key);
@@ -372,8 +378,16 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     
                 }
                 else{
-                    string value = hs->GetValue();
-                    cout << "otherhex: " << value << endl;
+                    // LookupOption(6) Yet another way to lookup
+                    string lookup_key_seq = hs->GetValue();
+                    string text = "";
+                    for (auto &_char : lookup_key_seq){
+                        if ( g_symLookup.map_bfchars.find(_char) != g_symLookup.map_bfchars.end()){
+                            text += g_symLookup.map_bfchars[_char];
+                        }
+                    }
+                    g_symLookup.text_data->text += text;
+                    if (LOG>=1) cout << "otherhex Tf: " << lookup_key_seq << " lookup values: " << text << endl;
                 }
                 
             }
