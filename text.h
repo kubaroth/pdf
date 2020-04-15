@@ -85,8 +85,8 @@ struct  SymbolLookup{
     vector<string> differences_table; // thiess is a symbol table
     vector<string> bfchars;   // Option 2 text data
 
-    map<char, char> map_bfchars;   // Option 2 text data
-    tuple<char, char, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
+    map<char, string> map_bfchars;   // Option 2 text data
+    tuple<char, string, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
 
     // text data from a stream converted to text
     // The data to be pulated is moved from externally initilized variable
@@ -137,7 +137,7 @@ struct  SymbolLookup{
                 key_char= _s[0]; // NOTE: here key_string is single char
             else
                 key_char= _s[1]; 
-            symbol_pair = {key_char, 'a' , bfchars_index};
+            symbol_pair = {key_char, "a" , bfchars_index};
         }
         else {
             // only add if there are consecutive indices
@@ -146,16 +146,17 @@ struct  SymbolLookup{
                 // handling ligatures ff, fi, fl (TODO: there are more...)
                 if ((_s[0] == '\373') && (_s[1] == '\000')) {
                     // todo handle keys as \000\002 instead \002
-                    map_bfchars[std::get<0>(symbol_pair)] = 'f'; // ff -> can't use 'ff' as we use char
+                    map_bfchars[std::get<0>(symbol_pair)] = "fi"; // ff -> can't use 'ff' as we use char
                 }
                 else if ((_s[0] == '\373') && (_s[1] == '\001')) {
-                    map_bfchars[std::get<0>(symbol_pair)] = 'i'; // fi
+                    map_bfchars[std::get<0>(symbol_pair)] = "fi"; // fi
                 }
                 else if ((_s[0] == '\373') && (_s[1] == '\002')) {
-                    map_bfchars[std::get<0>(symbol_pair)] = 'l'; // fl
+                    map_bfchars[std::get<0>(symbol_pair)] = "fl"; // fl
                 }
                 else {
-                    map_bfchars[std::get<0>(symbol_pair)] = _s[1];
+                    string char_string(1, _s[1]);
+                    map_bfchars[std::get<0>(symbol_pair)] = char_string;
                 }
             }
         }
@@ -349,25 +350,30 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                 if (value.size() == 2){  // so far seem like keys are alway char[2]
                     // from two-char string extract second char:  \000\003
                     // this can be a key in the lookup dictionary 
-                    char key = value[1]; // TODO: can't use string, let's drop leading \000
-                    char char_value;
+                    char key = value[1];
+                    string char_value;
+                    /*
                     if ( g_symLookup.map_bfchars.find(key) != g_symLookup.map_bfchars.end()){
                         char_value = g_symLookup.map_bfchars[key];
                         // For (keys value) which which are not equal use that char without offet
-                        if (char_value != key) {
-                            g_symLookup.text_data->text += char_value;
+                        if (char_value[1] != key) { // TODO
+                            string char_string = char_value;
+                            g_symLookup.text_data->text += char_string;
                         }
                         else {
                             key += 29;  // magic number
-                            g_symLookup.text_data->text += key;
+                            string key_string = key;
+                            g_symLookup.text_data->text += key_string;
                         }
                  
                     }
                     // Remaining majority not found in the lookup dictionary
                     else{
                         key += 29;  // magic number
-                        g_symLookup.text_data->text += key;
+                        string key_string = key;
+                        g_symLookup.text_data->text += key_string;
                     }
+                    */
                 }
                 else{
                     string value = hs->GetValue();
