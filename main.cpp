@@ -25,11 +25,11 @@ int main() {
     // textDataPtr = parse_page("../pdfs/ink_ff_fi_fl_fg.pdf", 0);
     // cout << "read result5:"<< textDataPtr->text <<endl;
 
-    textDataPtr = parse_page("../pdfs/test_2pages.pdf", 1); // page 2
-    cout << "text: " << textDataPtr->text <<endl;
+    // textDataPtr = parse_page("../pdfs/test_2pages.pdf", 1); // page 2
+    // cout << "text: " << textDataPtr->text <<endl;
 
     
-    // textDataPtr = parse_page("../dsohowto.pdf", 1);  // test page 2
-    // cout << "read result6:"<< textDataPtr->text <<endl;
+    textDataPtr = parse_page("../dsohowto.pdf", 1);  // test page 2
+    cout << "read result6:"<< textDataPtr->text <<endl;
     
 }

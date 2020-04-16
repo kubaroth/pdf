@@ -77,20 +77,16 @@ struct  SymbolLookup{
     // Currnetly using dsohowto.pdf as a test case.
     const string resource_differences = "Differences";
 
-    
-   
-    bool record = false;  // Mark enable when traversing the 'use_differences' section
-    // For now let's assume we can use one or the other
-    bool use_buffer_char = false;  // Option 1: strings stored in a stream + some symbol lookup
-    bool use_differences = false;  // Option 2: (hex strings) stored in dictionary
-
-    queue<PDFObject*> objectStack;
-    
-    vector<string> differences_table; // thiess is a symbol table
-    vector<string> bfchars;   // Option 2 text data
+    //For ObjectLiteralString part of ObjArray words can be broken at the end of the line
+    // having "-" at the start/end of the string.
+    // Each part being a separate StringLiteral object.
+    // While adding " " character we need to take into accont "-" and skip adding the " "
+    pair<string, string> prev_word = {"", ""};
 
     map<char, string> map_bfchars;   // Option 2 text data
     tuple<char, string, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
+
+    pair<char, string> lookup_pair;
 
     // text data from a stream converted to text
     // The data to be pulated is moved from externally initilized variable
@@ -106,41 +102,44 @@ struct  SymbolLookup{
         bfchars_index = 0;
         return *this;
     }
-    
+    /// Extracting the (key,value) mapping from "Differences" encoding dictionary
+    /// Specifies  complete character encoding for this font.
     void add_table(PDFArray * array){
-        use_differences = true;
-
-        // symbol table is repeated multiple times and can be regenerated (for now)
-        differences_table.clear();
 
         SingleValueContainerIterator<PDFObjectVector> it = array->GetIterator();
+        char index = 0;  // keep track when the pair needs to be saved
+
         while (it.MoveNext()) {
+            index++;
             PDFObject* obj = it.GetItem();
             if (obj->GetType() == PDFObject::ePDFObjectName){
-                differences_table.push_back(((PDFName*)obj)->GetValue());
+                string name = ((PDFName*)obj)->GetValue();
+                lookup_pair.second = name;
             }
             else if (obj->GetType() == PDFObject::ePDFObjectInteger){
-                differences_table.push_back(std::to_string(((PDFInteger*)obj)->GetValue()));
+                char key_index = ((PDFInteger*)obj)->GetValue();
+                lookup_pair.first = key_index;
             }
             else{
                 assert(("this should not happend we need to add more type handling here", obj==nullptr));
             }
+            // update lookup table
+            if (index % 2 == 0){
+                map_bfchars[lookup_pair.first] = lookup_pair.second;
+            }
         }
     }
-    /// if the bfchar symbol is encounterd add (index, character) pair to the lookup table
+    /// Extracting the (key,value) mapping if the bfchar symbol is encountered
+    /// add (index, character) pair to the lookup table
     void add_bfchars(string _s){
-        use_buffer_char = true;  // mark the mode pdf data is stored
-        // TODO: we want to store key:value map instead of list
-        // keep track of modulo to set key or value
-        bfchars.push_back(_s);
 
-        
+
         if (bfchars_index%2 == 0){
             char key_char;
             if (_s.size() == 1)
                 key_char= _s[0]; // NOTE: here key_string is single char
             else
-                key_char= _s[1]; 
+                key_char= _s[1];
             symbol_pair = {key_char, "a" , bfchars_index};
         }
         else {
@@ -167,16 +166,6 @@ struct  SymbolLookup{
         }
 
         bfchars_index++;
-    }
-
-    void print_bfchars() const {
-        int index = 0;
-        for (auto it=bfchars.begin(); it!=bfchars.end(); it=it+2){ // store only values
-            auto _key = *it;
-            auto _value = *(it+1);
-            if (LOG>=1) cout << "index:" << index  << " key:" << _key << " value:  "<< _value <<endl;
-            index++;
-        }
     }
 };
 
@@ -240,7 +229,6 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
     PDFObject *obj;
 
     // Start parsing objects from a stream
-    cout << "streamStart" << "-------" << endl;
     pair<string,string> symbol_next = {"",""};
     while (obj=pp->ParseNewObject()){
         // Handle Symbol objects
@@ -250,17 +238,11 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
 
             // Record the current symbol and alter the logic of the
             // next encounterd HexString in the Stream
-            
+
             // Store the currnet one and previous symbol
             symbol_next.first = symbol_next.second;
             symbol_next.second = symbolVal;
 
-            if (g_symLookup.bfchar_start.find(symbolVal) != string::npos){
-                g_symLookup.record = true;
-            }
-            else if (g_symLookup.bfchar_end.find(symbolVal) != string::npos){
-                g_symLookup.record = false;
-            }
         }
         // Option 1 (using stream)
         else if (obj->GetType() == PDFObject::ePDFObjectArray){
@@ -281,12 +263,65 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     if (obj1->GetType() == PDFObject::ePDFObjectInteger){
                         if (LOG>=2) cout << "arr (int) : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
                     }
-                    // LookupOption 2 - inkspace 
+                    // LookupOption 2 - inkspace
                     else if (obj1->GetType() == PDFObject::ePDFObjectLiteralString){
                         if (LOG>=2) cout << "arr (str) : " <<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : " << ((PDFLiteralString*)obj1)->GetValue() <<endl;
-                        if (symbol_next.second.compare("Tf") == 0){
+                        if ((symbol_next.second.compare("Tf") == 0) ||
+                            (symbol_next.second.compare("Td") == 0)) {  // dsohowto.pdf
                             string text = ((PDFLiteralString*)obj1)->GetValue();
-                            g_symLookup.text_data->text += text;
+
+                            // lookup value in the table, and update text variable
+                            string new_text = "";
+                            for (auto &_char : text){
+                                if ( g_symLookup.map_bfchars.find(_char) != g_symLookup.map_bfchars.end()){
+                                    new_text += g_symLookup.map_bfchars[_char];
+                                }
+                                else {
+                                    new_text += _char;
+                                }
+                            }
+
+                            // update prev_word pair
+                            g_symLookup.prev_word.first = g_symLookup.prev_word.second;
+                            g_symLookup.prev_word.second = new_text;
+
+                            // skip the work we will combine in (next iteration)
+                            auto found = g_symLookup.prev_word.second.find('-');
+                            if (found == g_symLookup.prev_word.second.size()-1) {
+                                continue;
+                            }
+
+                            // (Next iteration)
+                            // merge previoius word wit the current
+                            found = g_symLookup.prev_word.first.find('-');
+                            string first_word = g_symLookup.prev_word.first;
+                            if (found == first_word.size()-1) {
+                                string first = first_word.substr(0,first_word.size()-1);
+                                new_text = first + g_symLookup.prev_word.second;
+
+                                cout << "combined word_pair " << g_symLookup.prev_word.first<< ":";
+                                cout << g_symLookup.prev_word.second;
+                                cout << " " << new_text << endl;
+                            }
+
+                            // NOTE naive heuristic for adding spaces, right now
+                            if (new_text.size() > 2){
+                                new_text = " " + new_text;
+                            }
+                            else{ // TODO: exclude "a at to go is "
+                                string short_words = "a,at,to,go,is,of,it,in,be,we,is,by,on";
+                                string new_text_separator = new_text + ','; // search for word with separator included
+                                // convert all characters  to lower case to avoid doubling short_words
+                                std::transform(new_text_separator.begin(), new_text_separator.end(), new_text_separator.begin(),
+                                               [](unsigned char c){ return std::tolower(c); });
+                                if (short_words.find(new_text_separator) != string::npos){
+                                    new_text += " ";
+                                }
+                            }
+
+                            // Finally update the global text
+                            g_symLookup.text_data->text += new_text;
+
                         }
                     }
                     // Option 2 : hexstrings with table lookup only (bginfchar/endbfchar)
@@ -304,6 +339,11 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                                 text += g_symLookup.map_bfchars[_char];
                             }
                         }
+
+                        // remove replacement of double quote with 'quotedblright'
+                        if (text.find("quote") != string::npos)
+                            continue;
+
                         g_symLookup.text_data->text += text;
                     }
                     else if (obj1->GetType() == PDFObject::ePDFObjectSymbol){
@@ -330,7 +370,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             // Build Lookup-Table
             // Stream following "beginbfchar" symbol are key-value pairs "\001" -> "\000B"
             // Store then in the lookup table
-            
+
             // if (g_symLookup.record ) {  // TODO: cleanup - this is no longer needed
             if (symbol_next.second.compare("beginbfchar") == 0){
                 string value = hs->GetValue();
@@ -367,7 +407,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                             string key_string(1, key);
                             g_symLookup.text_data->text += key_string;
                         }
-                 
+
                     }
                     // For remaining majority of keys (googledocs document) not found in the lookup dictionary
                     else{
@@ -375,7 +415,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                         string key_string(1,key);
                         g_symLookup.text_data->text += key_string;
                     }
-                    
+
                 }
                 else{
                     // LookupOption(6) Yet another way to lookup
@@ -389,7 +429,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     g_symLookup.text_data->text += text;
                     if (LOG>=1) cout << "otherhex Tf: " << lookup_key_seq << " lookup values: " << text << endl;
                 }
-                
+
             }
 
             cout << "symbol_prev: " << symbol_next.first << "  symbol curr: " << symbol_next.second <<endl;
@@ -420,7 +460,6 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             if (LOG>=2) cout << "other " << obj->scPDFObjectTypeLabel(obj->GetType()) << " : " <<  endl;
         }
     }
-    cout << "streamEnd" << "--------" << endl;
 }
 
 void parseObjectSymbol(PDFParser &parser, PDFSymbol *obj, int depth){
@@ -628,9 +667,9 @@ unique_ptr<TextData> parse_page(string document_path, int page_number){
     // auto symLookup = make_shared<SymbolLookup>();
 
     // g_symLookup(); // reinitialize on each parse page invocation;
-    
+
     unique_ptr<TextData> textData( new TextData() );
-    g_symLookup = SymbolLookup();  
+    g_symLookup = SymbolLookup();
     g_symLookup.text_data = std::move(textData);
 
     EStatusCode status = pdfFile.OpenFile(document_path);
@@ -682,8 +721,6 @@ unique_ptr<TextData> parse_page(string document_path, int page_number){
                 PDFStreamInput* inStream = (PDFStreamInput*)page_section.GetPtr();
                 parseObjectStream(parser, inStream, 0);
             }
-            // If not there is another method to store and reference symbols
-            // assert ((g_symLookup.use_buffer_char == true) || (g_symLookup.use_differences == true));
         }
     };
 
