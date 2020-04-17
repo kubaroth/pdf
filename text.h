@@ -46,6 +46,7 @@
 #include <cassert>
 #include <memory>
 #include <queue>
+#include <cmath>        // std::abs
 
 static std::set<ObjectIDType>pageIds;  // TODO: temp structure to remove duplicates of indirectRefs objects
 
@@ -87,6 +88,7 @@ struct  SymbolLookup{
     tuple<char, string, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
 
     pair<char, string> lookup_pair;
+    bool add_space = false;  // if previous Object is Integer for Array and current is LiteralString enable
 
     // text data from a stream converted to text
     // The data to be pulated is moved from externally initilized variable
@@ -253,7 +255,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             else{
                 SingleValueContainerIterator<PDFObjectVector> it = arr->GetIterator();
                 PDFObject* obj1 = it.GetItem();
-                // do {  // NOTE: with do while form first token is repeated twice.
+
                 while (it.MoveNext()){
                     obj1 = it.GetItem();
                     // These are majority of cases to handle Integer and LiteralString
@@ -262,6 +264,10 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                     // Literal string: is the (word) inside parenthesis
                     if (obj1->GetType() == PDFObject::ePDFObjectInteger){
                         if (LOG>=2) cout << "arr (int) : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
+                        int value = ((PDFInteger*)obj1)->GetValue();
+                        if (std::abs(value) > 50){
+                            g_symLookup.add_space = true;
+                        }
                     }
                     // LookupOption 2 - inkspace
                     else if (obj1->GetType() == PDFObject::ePDFObjectLiteralString){
@@ -304,23 +310,32 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                                 cout << " " << new_text << endl;
                             }
 
-                            // NOTE naive heuristic for adding spaces, right now
-                            if (new_text.size() > 2){
+                            // Option 2
+                            if (g_symLookup.add_space){
                                 new_text = " " + new_text;
                             }
-                            else{ // TODO: exclude "a at to go is "
-                                string short_words = "a,at,to,go,is,of,it,in,be,we,is,by,on";
-                                string new_text_separator = new_text + ','; // search for word with separator included
-                                // convert all characters  to lower case to avoid doubling short_words
-                                std::transform(new_text_separator.begin(), new_text_separator.end(), new_text_separator.begin(),
-                                               [](unsigned char c){ return std::tolower(c); });
-                                if (short_words.find(new_text_separator) != string::npos){
-                                    new_text += " ";
-                                }
-                            }
+                            // skip adding space
+                            else { }
+
+                            // Option 1
+                            // // NOTE naive heuristic for adding spaces, right now
+                            // if (new_text.size() > 2){
+                            //     new_text = " " + new_text;
+                            // }
+                            // else{ // TODO: exclude "a at to go is "
+                            //     string short_words = "a,at,be,by,go,in,is,is,it,of,on,to,we";
+                            //     string new_text_separator = new_text + ','; // search for word with separator included
+                            //     // convert all characters  to lower case to avoid doubling short_words
+                            //     std::transform(new_text_separator.begin(), new_text_separator.end(), new_text_separator.begin(),
+                            //                    [](unsigned char c){ return std::tolower(c); });
+                            //     if (short_words.find(new_text_separator) != string::npos){
+                            //         new_text += " ";
+                            //     }
+                            // }
 
                             // Finally update the global text
                             g_symLookup.text_data->text += new_text;
+                            g_symLookup.add_space = false; // reset to false
 
                         }
                     }
