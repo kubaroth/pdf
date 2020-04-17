@@ -78,16 +78,15 @@ struct  SymbolLookup{
     // Currnetly using dsohowto.pdf as a test case.
     const string resource_differences = "Differences";
 
+    map<char, string> map_bfchars;   // Option 2 text data
+    tuple<char, string, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
+
     //For ObjectLiteralString part of ObjArray words can be broken at the end of the line
     // having "-" at the start/end of the string.
     // Each part being a separate StringLiteral object.
     // While adding " " character we need to take into accont "-" and skip adding the " "
-    pair<string, string> prev_word = {"", ""};
-
-    map<char, string> map_bfchars;   // Option 2 text data
-    tuple<char, string, int > symbol_pair; // key, value, index - helper to store key values while extracting hexstrings from stream
-
-    pair<char, string> lookup_pair;
+    pair<string, string> prev_word = {"", ""};  // original unprocessed text to search for dashes
+    pair<char, string> lookup_pair; // The same purpose as 'symbol_pair' TODO: merge them together
     bool add_space = false;  // if previous Object is Integer for Array and current is LiteralString enable
 
     // text data from a stream converted to text
@@ -255,7 +254,8 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
             else{
                 SingleValueContainerIterator<PDFObjectVector> it = arr->GetIterator();
                 PDFObject* obj1 = it.GetItem();
-
+                // TODO: very minor - but skip if the last word in previous array had "-" see: prev_word
+                g_symLookup.add_space = true; // Assures the first word in array will have space inserted at the front
                 while (it.MoveNext()){
                     obj1 = it.GetItem();
                     // These are majority of cases to handle Integer and LiteralString
@@ -310,28 +310,12 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                                 cout << " " << new_text << endl;
                             }
 
-                            // Option 2
+                            // Option 2 - introduce extra space between each LiteralStringObject (where required)
                             if (g_symLookup.add_space){
                                 new_text = " " + new_text;
                             }
                             // skip adding space
                             else { }
-
-                            // Option 1
-                            // // NOTE naive heuristic for adding spaces, right now
-                            // if (new_text.size() > 2){
-                            //     new_text = " " + new_text;
-                            // }
-                            // else{ // TODO: exclude "a at to go is "
-                            //     string short_words = "a,at,be,by,go,in,is,is,it,of,on,to,we";
-                            //     string new_text_separator = new_text + ','; // search for word with separator included
-                            //     // convert all characters  to lower case to avoid doubling short_words
-                            //     std::transform(new_text_separator.begin(), new_text_separator.end(), new_text_separator.begin(),
-                            //                    [](unsigned char c){ return std::tolower(c); });
-                            //     if (short_words.find(new_text_separator) != string::npos){
-                            //         new_text += " ";
-                            //     }
-                            // }
 
                             // Finally update the global text
                             g_symLookup.text_data->text += new_text;
