@@ -13,8 +13,8 @@ int main() {
 
     // Below tests are primarily for debugging purposes.
     
-    // textDataPtr = parse_page("../pdfs/test_openoffice.pdf", 0);
-    // cout << "read result2:"<< textDataPtr->text <<endl;
+    textDataPtr = parse_page("../pdfs/test_openoffice.pdf", 0);
+    cout << "read result2:"<< textDataPtr->text <<endl;
 
     // textDataPtr = parse_page("../pdfs/test_google_docs.pdf", 0);
     // cout << "read result3:"<< textDataPtr->text <<endl;
@@ -27,9 +27,8 @@ int main() {
 
     // textDataPtr = parse_page("../pdfs/test_2pages.pdf", 1); // page 2
     // cout << "text: " << textDataPtr->text <<endl;
-
-    
-    textDataPtr = parse_page("../dsohowto.pdf", 1);  // test page 2
-    cout << "read result6:"<< textDataPtr->text <<endl;
+   
+    // textDataPtr = parse_page("../dsohowto.pdf", 1);  // test page 2
+    // cout << "read result6:"<< textDataPtr->text <<endl;
     
 }
