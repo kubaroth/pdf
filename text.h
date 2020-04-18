@@ -48,7 +48,6 @@
 #include <queue>
 #include <cmath>        // std::abs
 
-static std::set<ObjectIDType>pageIds;  // TODO: temp structure to remove duplicates of indirectRefs objects
 
 using namespace std;
 using namespace PDFHummus;
@@ -57,7 +56,7 @@ using namespace PDFHummus;
 // 1: main messages
 // 2: useful debug
 // 3: all (currently disabled, as these execution paths are not used)
-#define LOG 2
+#define LOG 0
 
 ///////////////////  Parsing a page
 struct TextData {
@@ -305,7 +304,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
                                 string first = first_word.substr(0,first_word.size()-1);
                                 new_text = first + g_symLookup.prev_word.second;
 
-                                cout << "combined word_pair " << g_symLookup.prev_word.first<< ":";
+                                if (LOG>=2) cout << "combined word_pair " << g_symLookup.prev_word.first<< ":";
                                 cout << g_symLookup.prev_word.second;
                                 cout << " " << new_text << endl;
                             }
@@ -431,7 +430,7 @@ void parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
 
             }
 
-            cout << "symbol_prev: " << symbol_next.first << "  symbol curr: " << symbol_next.second <<endl;
+            if (LOG>=2) cout << "symbol_prev: " << symbol_next.first << "  symbol curr: " << symbol_next.second <<endl;
         }
         else if (obj->GetType() == PDFObject::ePDFObjectName){
             auto name = ((PDFName*)obj)->GetValue();
@@ -725,9 +724,9 @@ unique_ptr<TextData> parse_page(string document_path, int page_number){
 
     // Parse page object
     RefCountPtr<PDFDictionary> page(parser.ParsePage(page_number));
-    cout << "parsing Resource..." <<endl;
+    if (LOG >=1) cout << "parsing Resources..." <<endl;
     Impl::parseSection(parser, page, "Resources");
-    cout << "parsing Contents..." <<endl;
+    if (LOG >=1) cout << "parsing Contents..." <<endl;
     Impl::parseSection(parser, page, "Contents");
 
     return std::move(g_symLookup.text_data);
