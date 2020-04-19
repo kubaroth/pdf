@@ -271,7 +271,7 @@ void SymbolLookup::parseObjectStream(PDFParser &parser, PDFStreamInput *object, 
                     if (obj1->GetType() == PDFObject::ePDFObjectInteger){
                         if (LOG>=2) cout << "arr (int) : "<<  obj1->scPDFObjectTypeLabel(obj1->GetType()) << " : "  << ((PDFInteger*)obj1)->GetValue() <<endl;
                         int value = ((PDFInteger*)obj1)->GetValue();
-                        if (std::abs(value) > 50){
+                        if (std::abs(value) > 50){  // Magic - offset less then 50 are considered as single word
                             m_add_space = true;
                         }
                     }
