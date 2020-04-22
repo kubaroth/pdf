@@ -123,7 +123,7 @@ private:
     void parseObjectSymbol(PDFParser &parser, PDFSymbol *obj, int depth);
 };
 
-void SymbolLookup::add_table(PDFArray * array){
+inline void SymbolLookup::add_table(PDFArray * array){
 
     SingleValueContainerIterator<PDFObjectVector> it = array->GetIterator();
     char index = 0;  // keep track when the pair needs to be saved
@@ -149,7 +149,7 @@ void SymbolLookup::add_table(PDFArray * array){
     }
 }
 
-void SymbolLookup::add_bfchars(string _s){
+inline void SymbolLookup::add_bfchars(string _s){
 
 
     if (m_bfchars_index%2 == 0){
@@ -186,44 +186,44 @@ void SymbolLookup::add_bfchars(string _s){
     m_bfchars_index++;
 }
 
-void SymbolLookup::parseObjectName(PDFParser &parser, PDFName *obj, int depth){
+inline void SymbolLookup::parseObjectName(PDFParser &parser, PDFName *obj, int depth){
     depth++;
     if (LOG>=2) cout << std::string(depth, ' ') << " [name]: " << obj->GetValue() <<endl;
 
 }
 
-void SymbolLookup::parseObjectInteger(PDFParser &parser, PDFInteger *obj, int depth){
+inline void SymbolLookup::parseObjectInteger(PDFParser &parser, PDFInteger *obj, int depth){
     depth++;
     if (LOG>=2) cout << std::string(depth, ' ') << " [integer]: " << obj->GetValue() <<endl;
 
 }
 
-void SymbolLookup::parseObjectLiteralStr(PDFParser &parser, PDFLiteralString *obj, int depth){
+inline void SymbolLookup::parseObjectLiteralStr(PDFParser &parser, PDFLiteralString *obj, int depth){
     depth++;
     if (LOG>=2) cout << std::string(depth, ' ') << " [literalStr]: " << obj->GetValue() <<endl;
 }
 
-void SymbolLookup::parseObjectBoolean(PDFParser &parser, PDFBoolean *obj, int depth){
+inline void SymbolLookup::parseObjectBoolean(PDFParser &parser, PDFBoolean *obj, int depth){
     depth++;
     if (LOG>=2) cout << std::string(depth, ' ') << " [bool]: " << obj->GetValue() <<endl;
 }
 
-void SymbolLookup::parseObjectHexString(PDFParser &parser, PDFHexString *obj, int depth){
+inline void SymbolLookup::parseObjectHexString(PDFParser &parser, PDFHexString *obj, int depth){
     depth++;
     if (LOG>=2) cout << std::string(depth, ' ') << " [hex]: " << obj->GetValue() <<endl;
 }
 
-void SymbolLookup::parseObjectNull(PDFParser &parser, PDFNull *obj, int depth){
+inline void SymbolLookup::parseObjectNull(PDFParser &parser, PDFNull *obj, int depth){
     depth++;
     if (LOG>=2) cout << std::string(depth, ' ') << " [NULL] " <<endl;
 }
 
-void SymbolLookup::parseObjectReal(PDFParser &parser, PDFReal *obj, int depth){
+inline void SymbolLookup::parseObjectReal(PDFParser &parser, PDFReal *obj, int depth){
     depth++;
     if (LOG>=2) cout << std::string(depth, ' ') << " [real]: " << obj->GetValue() <<endl;
 }
 
-void SymbolLookup::parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
+inline void SymbolLookup::parseObjectStream(PDFParser &parser, PDFStreamInput *object, int depth){
     depth++;
     PDFDictionary* obj1 = object->QueryStreamDictionary();
     if (LOG>=2) cout << std::string(depth, '.') << "streamDictionary " << endl;
@@ -464,13 +464,13 @@ void SymbolLookup::parseObjectStream(PDFParser &parser, PDFStreamInput *object, 
     }
 }
 
-void SymbolLookup::parseObjectSymbol(PDFParser &parser, PDFSymbol *obj, int depth){
+inline void SymbolLookup::parseObjectSymbol(PDFParser &parser, PDFSymbol *obj, int depth){
     depth++;
     // equivalent to UNKNOWN
     if (LOG>=2) cout << std::string(depth, ' ') << " [symbol]: " << "UNKNOWN" <<endl;
 }
 
-void SymbolLookup::parseObjectArray(PDFParser &parser, PDFArray *object, int depth){
+inline void SymbolLookup::parseObjectArray(PDFParser &parser, PDFArray *object, int depth){
     depth++;
     SingleValueContainerIterator<PDFObjectVector> it = object->GetIterator();
     int length = object->GetLength();
@@ -530,7 +530,7 @@ void SymbolLookup::parseObjectArray(PDFParser &parser, PDFArray *object, int dep
 
 }
 
-void SymbolLookup::parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
+inline void SymbolLookup::parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
     depth++;
 
     auto it = obj->GetIterator();
@@ -607,7 +607,7 @@ void SymbolLookup::parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int
     } while(it.MoveNext());
 }
 
-void SymbolLookup::parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReference *object, int depth=0){
+inline void SymbolLookup::parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirectObjectReference *object, int depth=0){
     depth++;
 
     PDFObject* obj = parser.ParseNewObject(object->mObjectID); // TODO: convert to RefCountPtr<PDFObject>
@@ -657,7 +657,7 @@ void SymbolLookup::parsePDFIndirectObjectReference(PDFParser &parser, PDFIndirec
     }
 }
 
-unique_ptr<TextData> parse_page(string document_path, int page_number){
+inline unique_ptr<TextData> parse_page(string document_path, int page_number){
 
     cout << "Extracting text from: " <<  document_path << " page: "<< page_number << endl;
 
