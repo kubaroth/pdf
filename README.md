@@ -1,6 +1,6 @@
 # Pdf Text Extractor
 
-A Tool to extract text string from PDF streams.
+A Tool to extract text strings from PDF streams.
 
 ## Building
 
