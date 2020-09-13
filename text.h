@@ -664,12 +664,6 @@ inline void SymbolLookup::parsePDFIndirectObjectReference(PDFParser &parser, PDF
 
 inline unique_ptr<TextData> parse_page(string document_path, int page_number){
 
-    std::string a("AAA");
-    PDFLiteralString as(a);
-    PDFnode<PDFLiteralString> aaa(&as);
-
-    PDFLiteralStringNode("AA");
-
     cout << "Extracting text from: " <<  document_path << " page: "<< page_number << endl;
 
     PDFParser parser;
