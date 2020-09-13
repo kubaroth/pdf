@@ -7,14 +7,13 @@ int main() {
    
     // parse_page("../dsohowto.pdf", 0);
 
-    auto textDataPtr = parse_page("non_exist_pdf", 0);
-    cout << "NULL: " << (textDataPtr == nullptr) <<endl;
-
+//    auto textDataPtr = parse_page("non_exist_pdf", 0);
+//    cout << "NULL: " << (textDataPtr == nullptr) <<endl;
 
     // Below tests are primarily for debugging purposes.
     
-    textDataPtr = parse_page("../pdfs/test_openoffice.pdf", 0);
-    cout << "read result2:"<< textDataPtr->text <<endl;
+    auto textDataPtr2 = parse_page("../pdfs/test_openoffice.pdf", 0);
+    cout << "read result2:"<< textDataPtr2->text <<endl;
 
     // textDataPtr = parse_page("../pdfs/test_google_docs.pdf", 0);
     // cout << "read result3:"<< textDataPtr->text <<endl;

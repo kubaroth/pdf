@@ -1,50 +1,52 @@
 # Pdf Text Extractor
 
-A Tool to extract text strings from PDF streams.
+A library to extract text (std::string) from PDF streams.
+
+    #include "text.h"
+    int page_number = 123;
+    auto data = parse_page("document.pdf", page_number);
+    cout << data->text <<endl;
 
 ## Building
 
-```
-mkdir __build && cd __build
-cmake .. -DHUMMUS_PATH=$HOME/toolchains/hummus
-make
-```
+    mkdir __build && cd __build
+    cmake .. -DHUMMUS_PATH=$HOME/toolchains/hummus
+    make
 
 The main dependency - PDF-Writer is required to be located in $HOME/toolchains/hummus
 to install it:
 
-```
-git clone https://github.com/galkahana/PDF-Writer.git
-mkdir __build && cd __build
-cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/toolchains/hummus
-make install
-```
+    git clone https://github.com/galkahana/PDF-Writer.git
+    mkdir __build && cd __build
+    cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/toolchains/hummus -DCMAKE_BUILD_TYPE=Debug
+    make install
+
 
 ## Testing
 
-```
-./test1
-```
+    ./ctest
 
-The test1 which covers basic cases of extracting text from Pdf Object types.
+The test1 which covers basic cases of extracting text from Pdf Object types such as:
 - HexString
 - LiteralString
 - Array of Literal Strings
 - Array of HextStrings
-- Common ligatures (fi, ff, fl) are converted to ascii sequence.
+- Common ligatures (fi, ff, fl) - right now are converted to ascii sequences.
 - Line positioning is taken into account to combine individual characters into complete words.
-- The character lookup table are build from two source:
--- bfchar object (HexStrings)
--- Differences object (LiteralStrings)
+- The character lookup table is built from two source:
+  - bfchar object (HexStrings) (see ResourcesVisitor for details)
+  - Difference object (LiteralStrings)
 
-## Debugging
+## Detailed traversal output:
 
-in text.h set:
+in corresponding visitor bum value of the LOG
+
+    #define LOG 2
+
+### Sanitizers
 
 ```
-#define LOG 2
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 ```
-
-update main.cpp to test specific pdf file
-
 

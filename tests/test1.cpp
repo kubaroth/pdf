@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "../text.h"
+#include "../src/text.h"
 
 TEST_CASE ("test_openoffice.pdf"){
     auto textDataPtr = parse_page("../pdfs/test_openoffice.pdf", 0);
