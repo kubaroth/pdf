@@ -41,6 +41,8 @@
 #include <PDFWriter/PDFSymbol.h>
 #include <PDFWriter/PDFStreamInput.h>
 
+#include "pdftraverse.h"
+
 using namespace std;
 using namespace PDFHummus;
 
@@ -48,7 +50,7 @@ using namespace PDFHummus;
 // 1: main messages
 // 2: useful debug
 // 3: all (currently disabled, as these execution paths are not used)
-#define LOG 0
+#define LOG 1
 
 /// Store extracted text (location/alignment/bbox in the future)
 struct TextData {
@@ -236,7 +238,10 @@ inline void SymbolLookup::parseObjectStream(PDFParser &parser, PDFStreamInput *o
     PDFObject *obj;
 
     // Start parsing objects from a stream
+
+    // Keep track of the currnet one and previous symbol
     pair<string,string> symbol_next = {"",""};
+
     while (obj=pp->ParseNewObject()){
         // Handle Symbol objects
         if (obj->GetType() == PDFObject::ePDFObjectSymbol){
@@ -529,7 +534,7 @@ inline void SymbolLookup::parseObjectArray(PDFParser &parser, PDFArray *object, 
     } while(it.MoveNext());
 
 }
-
+/// Entry Point 1
 inline void SymbolLookup::parsePDFDictionary(PDFParser &parser, PDFDictionary *obj, int depth=0){
     depth++;
 
@@ -659,6 +664,12 @@ inline void SymbolLookup::parsePDFIndirectObjectReference(PDFParser &parser, PDF
 
 inline unique_ptr<TextData> parse_page(string document_path, int page_number){
 
+    std::string a("AAA");
+    PDFLiteralString as(a);
+    PDFnode<PDFLiteralString> aaa(&as);
+
+    PDFLiteralStringNode("AA");
+
     cout << "Extracting text from: " <<  document_path << " page: "<< page_number << endl;
 
     PDFParser parser;
@@ -702,15 +713,17 @@ inline unique_ptr<TextData> parse_page(string document_path, int page_number){
 
             /// top level is a Dictionary
             if (page_section->GetType() == PDFObject::ePDFObjectDictionary){
-                PDFDictionary* dObj = (PDFDictionary*)page_section.GetPtr();
-                auto it = dObj->GetIterator();
+                PDFDictionary* dictObject = (PDFDictionary*)page_section.GetPtr();
+                auto it = dictObject->GetIterator();
                 while(it.MoveNext()) {
                     PDFName* name = it.GetKey();
                     PDFObject* obj = it.GetValue();
                     if (LOG>=1) cout << "name " << name->GetValue() << " " << obj->scPDFObjectTypeLabel(obj->GetType())<< endl;
-                    // page_section = parser.QueryDictionaryObject(dObj,name->GetValue());
+                    // page_section = parser.QueryDictionaryObject(dObj,name->GetValue()); // TODO: not sure why this is turned off
                 }
-                lookup.parsePDFDictionary(parser, dObj, 0);
+                /// THis is the first pass of the parser where we populate the character tables
+                /// TODO: collect document dimentions, (maybe all the bounding boxes for text)
+                lookup.parsePDFDictionary(parser, dictObject, 0);
             }
             /// Top level is a Stream
             else{
