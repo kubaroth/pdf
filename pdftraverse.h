@@ -4,6 +4,7 @@
 
 //#include <PDFWriter/PDFObject.h>
 #include <PDFWriter/PDFLiteralString.h>
+#include <PDFWriter/PDFDictionary.h>
 
 // Option 1
 
@@ -13,7 +14,6 @@
 // parameters in the constructor
 template <typename T>
 class PDFnode : public T {
-//    T * data_;
 public:
     void accept() {std::cout << "accept from PDFnodeTemplate"<<std::endl;}
     PDFnode(const T&& inValue) : T(inValue){ accept();} // this constructo needs to match each type
@@ -22,13 +22,12 @@ public:
 // partial specilization for T*
 template <typename T>
 class PDFnode<T*> : public T {
-//    T * data_;
 public:
-    void accept() {std::cout << "accept from PDFnodeTemplate"<<std::endl;}
+    void accept() {std::cout << "accept from PDFnodeTemplate ptr"<<std::endl;}
     PDFnode( T * inValue) : T(*inValue){ accept();} // this constructo needs to match each type
 };
 
-// Option 2
+// Option 2 (less preferable)
 
 // Here we would need to subclass and redefine _each_ PDFWriter* class
 class PDFLiteralStringNode : public PDFLiteralString{
