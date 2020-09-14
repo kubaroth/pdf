@@ -1,10 +1,14 @@
+/// Decorator of PDFObject and other subclasses
+/// The purpose is to extend the PDFWriter classes with accept method
+///  which will be executed during each visit
+
 #pragma once
 
 #include <string>
 
 //#include <PDFWriter/PDFObject.h>
-#include <PDFWriter/PDFLiteralString.h>
-#include <PDFWriter/PDFDictionary.h>
+//#include <PDFWriter/PDFLiteralString.h>
+//#include <PDFWriter/PDFDictionary.h>
 
 // Option 1
 
@@ -27,15 +31,23 @@ public:
     PDFnode( T * inValue) : T(*inValue){ accept();} // this constructo needs to match each type
 };
 
-// Option 2 (less preferable)
-
-// Here we would need to subclass and redefine _each_ PDFWriter* class
-class PDFLiteralStringNode : public PDFLiteralString{
+template <>
+class PDFnode<PDFArray*> : public PDFArray {
 public:
-    PDFLiteralStringNode(const std::string& inValue) : PDFLiteralString(inValue){
+    void accept() {std::cout << "accept from PDFnodeTemplate ptr - array"<<std::endl;}
+    PDFnode( PDFArray * inValue){
+        std::cout  << inValue->GetLength() << std::endl;
+        auto it = inValue->GetIterator();
+        auto i = 0;
+        for(it.MoveNext(); !it.IsFinished(); it.MoveNext()){
+            // std::cout  << i << " " << it.GetItem()->GetType() << std::endl;
+            AppendObject(std::move(it.GetItem()));  //TODO: is move the right thing here?
+            i++;
+        }
+        // TODO: should we cleanup input array at this point?
         accept();
     }
-
-    void accept() {std::cout << "accept from PDFLiteralStringNode"<<std::endl;}
-
 };
+// TODO: check other corner casses
+// PDFIndirectObjectReference
+// PDFStreamInput
