@@ -707,12 +707,10 @@ inline unique_ptr<TextData> parse_page(string document_path, int page_number){
 
             /// top level is a Dictionary
             if (page_section->GetType() == PDFObject::ePDFObjectDictionary){
-                // TODO: replace with PDFnode<PDFDictionary>
-                PDFnode<PDFDictionary> aaa(std::move (*(PDFDictionary*)page_section.GetPtr()));
-                PDFnode<PDFDictionary*> aaa_ptr(std::move((PDFDictionary*)page_section.GetPtr()));
 
-                PDFDictionary* dictObject = (PDFDictionary*)page_section.GetPtr();
-                auto it = dictObject->GetIterator();
+                PDFnode<PDFDictionary*> dictObject = (PDFDictionary*)page_section.GetPtr();
+                auto it = dictObject.GetIterator();
+
                 while(it.MoveNext()) {
                     PDFName* name = it.GetKey();
                     PDFObject* obj = it.GetValue();
@@ -721,12 +719,12 @@ inline unique_ptr<TextData> parse_page(string document_path, int page_number){
                 }
                 /// THis is the first pass of the parser where we populate the character tables
                 /// TODO: collect document dimentions, (maybe all the bounding boxes for text)
-                lookup.parsePDFDictionary(parser, dictObject, 0);
+                lookup.parsePDFDictionary(parser, &dictObject, 0);
             }
             /// Top level is a Stream
             else{
-                PDFStreamInput* inStream = (PDFStreamInput*)page_section.GetPtr();
-                lookup.parseObjectStream(parser, inStream, 0);
+                PDFnode<PDFStreamInput*> inStream = (PDFStreamInput*)page_section.GetPtr();
+                lookup.parseObjectStream(parser, &inStream, 0);
             }
         }
     };
