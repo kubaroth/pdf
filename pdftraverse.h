@@ -16,7 +16,8 @@ class PDFnode : public T {
 //    T * data_;
 public:
     void accept() {std::cout << "accept from PDFnodeTemplate"<<std::endl;}
-    PDFnode(const T& inValue) : T(inValue){ accept();} // this constructo needs to match each type
+    PDFnode(const T&& inValue) : T(inValue){ accept();} // this constructo needs to match each type
+};
 
 // partial specilization for T*
 template <typename T>

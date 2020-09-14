@@ -6,7 +6,9 @@
 TEST_CASE ("traverse_template_PDFLiteralStringNode"){
     std::string aaa("AAA");
     PDFLiteralString aaa_pdf(aaa);
-    PDFnode<PDFLiteralString> aaa_node(aaa_pdf);
+    PDFnode<PDFLiteralString> aaa_node(std::move(aaa_pdf));
+    REQUIRE( (aaa_node.GetType() == PDFObject::ePDFObjectLiteralString) == 1 );
+}
 
 TEST_CASE ("traverse_template_PDFLiteralStringNode_ptr"){
     std::string aaa("AAA");
