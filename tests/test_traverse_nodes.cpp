@@ -31,50 +31,43 @@ TEST_CASE ("traverse_template_PDFLiteralStringNode"){
     REQUIRE( (aaa_node.GetType() == PDFObject::ePDFObjectLiteralString) == true );
 }
 
-TEST_CASE ("traverse_template_PDFLiteralStringNode_ptr"){
-    std::string aaa("AAA");
-    PDFLiteralString aaa_pdf(aaa);
-    PDFnode<PDFLiteralString*> aaa_node(&aaa_pdf);
-    REQUIRE( (aaa_node.GetType() == PDFObject::ePDFObjectLiteralString) == true );
-}
 
-
-TEST_CASE ("traverse_template_PDFHexStringNode_ptr"){
+TEST_CASE ("traverse_template_PDFHexStringNode"){
     std::string aaa("FF");
     PDFHexString aaa_pdf(aaa);
-    PDFnode<PDFHexString*> aaa_node(&aaa_pdf);
+    PDFnode<PDFHexString> aaa_node(&aaa_pdf);
     REQUIRE( (aaa_node.GetType() == PDFObject::ePDFObjectHexString) == true );
 }
 
-TEST_CASE ("traverse_template_PDFNullNode_ptr"){
+TEST_CASE ("traverse_template_PDFNullNode"){
     PDFNull aaa_pdf(void);
 //    auto aaa_ptr = &aaa_pdf;
 //    PDFnode<PDFNull*> aaa_node(void);
 //    REQUIRE( (aaa_pdf.GetType() == PDFObject::ePDFObjectNull) == true );
 }
 
-TEST_CASE ("traverse_template_PDFNameNode_ptr"){
+TEST_CASE ("traverse_template_PDFNameNode"){
     std::string aaa("SomeName");
     PDFName aaa_pdf(aaa);
-    PDFnode<PDFName*> aaa_node(&aaa_pdf);
+    PDFnode<PDFName> aaa_node(&aaa_pdf);
     REQUIRE( (aaa_node.GetType() == PDFObject::ePDFObjectName) == true );
 }
 
 // type 5
 TEST_CASE ("traverse_template_PDFIntegerNode_ptr"){
     PDFInteger aaa_pdf(3);
-    PDFnode<PDFInteger*> aaa_node(&aaa_pdf);
+    PDFnode<PDFInteger> aaa_node(&aaa_pdf);
     REQUIRE( (aaa_node.GetType() == PDFObject::ePDFObjectInteger) == true );
 }
 
 // type 6
-TEST_CASE ("traverse_template_PDFRealNode_ptr"){
+TEST_CASE ("traverse_template_PDFRealNode"){
     PDFReal aaa_pdf(2.0);
-    PDFnode<PDFReal*> aaa_node(&aaa_pdf);
+    PDFnode<PDFReal> aaa_node(&aaa_pdf);
     REQUIRE( (aaa_node.GetType() == PDFObject::ePDFObjectReal) == true );
 }
 
-TEST_CASE ("traverse_template_PDFArrayNode_ptr"){
+TEST_CASE ("traverse_template_PDFArrayNode"){
     std::string aaa("AAA");           // type 1
     PDFLiteralString aaa_pdf(aaa);
     std::string bbb("FF");            // type 2
@@ -86,7 +79,7 @@ TEST_CASE ("traverse_template_PDFArrayNode_ptr"){
     array.AppendObject(&bbb_pdf);
     array.AppendObject(&ccc_pdf);
 
-    PDFnode<PDFArray*> array_node(&array);
+    PDFnode<PDFArray> array_node(&array);
     REQUIRE( array_node.GetLength() == 3);
     REQUIRE( (array_node.QueryObject(0)->GetType() == PDFObject::ePDFObjectLiteralString) == true );
     REQUIRE( (array_node.QueryObject(1)->GetType() == PDFObject::ePDFObjectHexString) == true );
@@ -98,7 +91,7 @@ TEST_CASE ("traverse_template_PDFArrayNode_ptr"){
     REQUIRE ( (array_node.QueryObject(2)->GetType() == PDFObject::ePDFObjectReal) == true);
 }
 
-TEST_CASE ("traverse_template_PDFDictionarygNode_ptr"){
+TEST_CASE ("traverse_template_PDFDictionarygNode"){
     std::string aaa("AAA");           // type 1
     PDFLiteralString aaa_pdf(aaa);
     PDFName aaa_name("AAA");
@@ -115,7 +108,7 @@ TEST_CASE ("traverse_template_PDFDictionarygNode_ptr"){
     dictionary->Insert(&bbb_name, &bbb_pdf);
     dictionary->Insert(&ccc_name, &ccc_pdf);
 
-    PDFnode<PDFDictionary*> dictionary_node(dictionary);
+    PDFnode<PDFDictionary> dictionary_node(dictionary);
 
     auto aaa_result = (PDFLiteralString*) dictionary_node.QueryDirectObject(aaa_name);
     REQUIRE( (aaa_result->GetType() == PDFObject::ePDFObjectLiteralString) == true );
@@ -125,16 +118,16 @@ TEST_CASE ("traverse_template_PDFDictionarygNode_ptr"){
     REQUIRE( (ccc_result->GetType() == PDFObject::ePDFObjectReal) == true );
 }
 
-TEST_CASE ("traverse_template_PDFIndirectObjectReferencegNode_ptr"){
+TEST_CASE ("traverse_template_PDFIndirectObjectReferencegNode"){
 
     PDFIndirectObjectReference indirectRef(2,3);
-    PDFnode<PDFIndirectObjectReference*> indirectRef_node(&indirectRef);
+    PDFnode<PDFIndirectObjectReference> indirectRef_node(&indirectRef);
 
     REQUIRE( indirectRef_node.mObjectID == 2);
     REQUIRE( indirectRef_node.mVersion == 3);
 }
 
-TEST_CASE ("traverse_template_PDFStreamInputNode_ptr"){
+TEST_CASE ("traverse_template_PDFStreamInputNode"){
     std::string aaa("AAA");           // type 1
     PDFLiteralString aaa_pdf(aaa);
     PDFName aaa_name("AAA");
@@ -144,7 +137,7 @@ TEST_CASE ("traverse_template_PDFStreamInputNode_ptr"){
 
     PDFStreamInput * pdf_stream = new PDFStreamInput(dictionary, 1);
 
-    PDFnode<PDFStreamInput*> stream_node(pdf_stream);
+    PDFnode<PDFStreamInput> stream_node(pdf_stream);
 
     auto dictionary_node = stream_node.QueryStreamDictionary();
     auto pdfobject = dictionary_node->QueryDirectObject(aaa_pdf);
@@ -153,7 +146,7 @@ TEST_CASE ("traverse_template_PDFStreamInputNode_ptr"){
 
 }
 
-TEST_CASE ("traverse_template_PDFSymbolNode_ptr"){
+TEST_CASE ("traverse_template_PDFSymbolNode"){
 
 }
 
@@ -163,13 +156,7 @@ TEST_CASE ("test visitor"){
     PDFLiteralString aaa_pdf(aaa);
 
     TestVistor tv;
-    //PDFnode<PDFLiteralString> aaa_node(aaa_pdf, &tv);
+    PDFnode<PDFLiteralString> aaa_node(aaa_pdf, &tv);
 
     //aaa_node.accept(tv);  // No need to explicitly call accept
-
-    PDFnode<PDFLiteralString*> aaa_node(&aaa_pdf, &tv);  // pointer
-
-
-
-
 }

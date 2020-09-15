@@ -30,35 +30,16 @@ public:
         std::cout << "accept from PDFnodeTemplate"<<std::endl;
         visitor.visit(this);
     }
-    void accept_ptr(NodeVisitor * visitor) {
-        std::cout << "accept from PDFnodeTemplate ptr"<<std::endl;
-        visitor->visit(this);
-    }
-//    PDFnode(const T& inValue) : T(std::move(inValue)){ }
+    // construc from another object
     PDFnode(const T& inValue, NodeVisitor * visitor = nullptr) : T(std::move(inValue)){ /* transfer ownership */
-        if (visitor) accept_ptr(visitor);
+        if (visitor) accept(*visitor);
+
+    }
+    // construc from pointer
+    PDFnode(const T* inValue, NodeVisitor * visitor = nullptr) : T(std::move(*inValue)){ /* transfer ownership */
+        if (visitor) accept(*visitor);
     }
     PDFnode (PDFnode const&) = delete;
-    PDFnode& operator=(PDFnode const&) = delete;
-};
-
-// partial specilization for T*
-template <typename T>
-class PDFnode<T*> : public T {
-public:
-    void accept(NodeVisitor & visitor) {
-        std::cout << "accept from PDFnodeTemplate ptr"<<std::endl;
-        visitor.visit(this);
-    }
-    void accept_ptr(NodeVisitor * visitor) {
-        std::cout << "accept from PDFnodeTemplate ptr"<<std::endl;
-        visitor->visit(this);
-    }
-//    PDFnode( T * inValue ) : T(std::move(*inValue)){}  /* transfer ownership */
-    PDFnode( T * inValue, NodeVisitor * visitor = nullptr) : T(std::move(*inValue)){  /* transfer ownership */
-        if (visitor) accept_ptr(visitor);
-    }
-    PDFnode(PDFnode const&) = delete;
     PDFnode& operator=(PDFnode const&) = delete;
 };
 
