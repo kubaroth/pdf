@@ -110,12 +110,12 @@ TEST_CASE ("traverse_template_PDFDictionarygNode_ptr"){
     PDFReal ccc_pdf(2.0);             // type 6
     PDFName ccc_name("2");
 
-    PDFDictionary dictionary;
-    dictionary.Insert(&aaa_name, &aaa_pdf);
-    dictionary.Insert(&bbb_name, &bbb_pdf);
-    dictionary.Insert(&ccc_name, &ccc_pdf);
+    PDFDictionary * dictionary = new PDFDictionary(); // needs heap allocation ???
+    dictionary->Insert(&aaa_name, &aaa_pdf);
+    dictionary->Insert(&bbb_name, &bbb_pdf);
+    dictionary->Insert(&ccc_name, &ccc_pdf);
 
-    PDFnode<PDFDictionary*> dictionary_node(&dictionary);
+    PDFnode<PDFDictionary*> dictionary_node(dictionary);
 
     auto aaa_result = (PDFLiteralString*) dictionary_node.QueryDirectObject(aaa_name);
     REQUIRE( (aaa_result->GetType() == PDFObject::ePDFObjectLiteralString) == true );
