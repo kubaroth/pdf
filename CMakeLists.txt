@@ -38,6 +38,10 @@ add_executable(test_traverse_nodes
   tests/test_traverse_nodes.cpp
   )
 
+add_executable(test2
+  tests/main.cpp
+  tests/test2.cpp
+  )
 
 target_link_libraries(test1
   ${HUMMUS_PATH}/lib/libPDFWriter.a
@@ -50,6 +54,16 @@ target_link_libraries(test1
   )
 
 target_link_libraries(test_traverse_nodes
+  ${HUMMUS_PATH}/lib/libPDFWriter.a
+  ${HUMMUS_PATH}/lib/libFreeType.a
+  ${HUMMUS_PATH}/lib/libLibAesgm.a
+  ${HUMMUS_PATH}/lib/libLibPng.a
+  ${HUMMUS_PATH}/lib/libLibTiff.a
+  ${HUMMUS_PATH}/lib/libLibJpeg.a
+  ${HUMMUS_PATH}/lib/libZlib.a
+  )
+
+target_link_libraries(test2
   ${HUMMUS_PATH}/lib/libPDFWriter.a
   ${HUMMUS_PATH}/lib/libFreeType.a
   ${HUMMUS_PATH}/lib/libLibAesgm.a
