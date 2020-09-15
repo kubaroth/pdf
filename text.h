@@ -708,7 +708,7 @@ inline unique_ptr<TextData> parse_page(string document_path, int page_number){
             /// top level is a Dictionary
             if (page_section->GetType() == PDFObject::ePDFObjectDictionary){
 
-                PDFnode<PDFDictionary*> dictObject = (PDFDictionary*)page_section.GetPtr();
+                PDFnode<PDFDictionary*> dictObject((PDFDictionary*)page_section.GetPtr());
                 auto it = dictObject.GetIterator();
 
                 while(it.MoveNext()) {
@@ -723,7 +723,7 @@ inline unique_ptr<TextData> parse_page(string document_path, int page_number){
             }
             /// Top level is a Stream
             else{
-                PDFnode<PDFStreamInput*> inStream = (PDFStreamInput*)page_section.GetPtr();
+                PDFnode<PDFStreamInput*> inStream((PDFStreamInput*)page_section.GetPtr());
                 lookup.parseObjectStream(parser, &inStream, 0);
             }
         }

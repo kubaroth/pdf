@@ -21,7 +21,8 @@
 // either by value or pointer and implments accept() method
 // which accepts visitor
 
-// TODO: define second template parameter which defaults on Visitor type
+// TODO: define second template parameter which defaults (c++17?) on Visitor type
+//       This would be require if we want to pass Visitor as a second argument to ctor
 template <typename T>
 class PDFnode : public T {
 public:
@@ -29,7 +30,16 @@ public:
         std::cout << "accept from PDFnodeTemplate"<<std::endl;
         visitor.visit(this);
     }
-    PDFnode(const T& inValue) : T(std::move(inValue)){} // transfer ownership
+    void accept_ptr(NodeVisitor * visitor) {
+        std::cout << "accept from PDFnodeTemplate ptr"<<std::endl;
+        visitor->visit(this);
+    }
+//    PDFnode(const T& inValue) : T(std::move(inValue)){ }
+    PDFnode(const T& inValue, NodeVisitor * visitor = nullptr) : T(std::move(inValue)){ /* transfer ownership */
+        if (visitor) accept_ptr(visitor);
+    }
+    PDFnode (PDFnode const&) = delete;
+    PDFnode& operator=(PDFnode const&) = delete;
 };
 
 // partial specilization for T*
@@ -40,7 +50,16 @@ public:
         std::cout << "accept from PDFnodeTemplate ptr"<<std::endl;
         visitor.visit(this);
     }
-    PDFnode( T * inValue) : T(std::move(*inValue)){} // transfer ownership
+    void accept_ptr(NodeVisitor * visitor) {
+        std::cout << "accept from PDFnodeTemplate ptr"<<std::endl;
+        visitor->visit(this);
+    }
+//    PDFnode( T * inValue ) : T(std::move(*inValue)){}  /* transfer ownership */
+    PDFnode( T * inValue, NodeVisitor * visitor = nullptr) : T(std::move(*inValue)){  /* transfer ownership */
+        if (visitor) accept_ptr(visitor);
+    }
+    PDFnode(PDFnode const&) = delete;
+    PDFnode& operator=(PDFnode const&) = delete;
 };
 
 

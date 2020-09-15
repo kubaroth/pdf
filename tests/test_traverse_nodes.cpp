@@ -161,10 +161,15 @@ TEST_CASE ("traverse_template_PDFSymbolNode_ptr"){
 TEST_CASE ("test visitor"){
     std::string aaa("AAA");
     PDFLiteralString aaa_pdf(aaa);
-    PDFnode<PDFLiteralString> aaa_node(aaa_pdf);
 
     TestVistor tv;
-    aaa_node.accept(tv);
+    //PDFnode<PDFLiteralString> aaa_node(aaa_pdf, &tv);
+
+    //aaa_node.accept(tv);  // No need to explicitly call accept
+
+    PDFnode<PDFLiteralString*> aaa_node(&aaa_pdf, &tv);  // pointer
+
+
 
 
 }
