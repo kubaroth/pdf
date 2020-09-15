@@ -27,14 +27,14 @@ TEST_CASE ("traverse_template_PDFBooleanNode_ptr"){
 TEST_CASE ("traverse_template_PDFLiteralStringNode"){
     std::string aaa("AAA");
     PDFLiteralString aaa_pdf(aaa);
-    PDFnode<PDFLiteralString> aaa_node(std::move(aaa_pdf));
+    PDFnode<PDFLiteralString> aaa_node(aaa_pdf);
     REQUIRE( (aaa_node.GetType() == PDFObject::ePDFObjectLiteralString) == true );
 }
 
 TEST_CASE ("traverse_template_PDFLiteralStringNode_ptr"){
     std::string aaa("AAA");
     PDFLiteralString aaa_pdf(aaa);
-    PDFnode<PDFLiteralString*> aaa_node(std::move(&aaa_pdf));
+    PDFnode<PDFLiteralString*> aaa_node(&aaa_pdf);
     REQUIRE( (aaa_node.GetType() == PDFObject::ePDFObjectLiteralString) == true );
 }
 
@@ -161,7 +161,7 @@ TEST_CASE ("traverse_template_PDFSymbolNode_ptr"){
 TEST_CASE ("test visitor"){
     std::string aaa("AAA");
     PDFLiteralString aaa_pdf(aaa);
-    PDFnode<PDFLiteralString> aaa_node(std::move(aaa_pdf));
+    PDFnode<PDFLiteralString> aaa_node(aaa_pdf);
 
     TestVistor tv;
     aaa_node.accept(tv);

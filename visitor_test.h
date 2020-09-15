@@ -36,7 +36,9 @@ public:
 
 class TestVistor:  public NodeVisitor{
 public:
-    void visit(PDFnode<PDFBoolean> * node) override;
+    void visit(PDFnode<PDFBoolean> * node) override{
+        std::cout << "++++TestVistor - PDFBoolean" << std::endl;
+    }
     void visit(PDFnode<PDFLiteralString> * node) override;
     void visit(PDFnode<PDFHexString> * node) override;
     void visit(PDFnode<PDFNull> * node) override;
@@ -60,9 +62,9 @@ public:
 //};
 
 //////////////////
-void TestVistor::visit(PDFnode<PDFBoolean> * node) {
-    std::cout << "++++TestVistor - PDFBoolean" << std::endl;
-}
+//void TestVistor::visit(PDFnode<PDFBoolean> * node) {
+//    std::cout << "++++TestVistor - PDFBoolean" << std::endl;
+//}
 void TestVistor::visit(PDFnode<PDFLiteralString> * node) {
     std::cout << "++++TestVistor - PDFLiteralString" << std::endl;
 }
