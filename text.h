@@ -485,47 +485,58 @@ inline void SymbolLookup::parseObjectArray(PDFParser &parser, PDFArray *object, 
 
         if (obj->GetType() == PDFObject::ePDFObjectBoolean){
             //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectBoolean" <<endl;
-            parseObjectBoolean(parser, (PDFBoolean*)obj, depth);
+            PDFnode<PDFBoolean> obj_adapt((PDFBoolean*)obj);
+            parseObjectBoolean(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectLiteralString){
             //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectLiteralString" << endl;
-            parseObjectLiteralStr(parser, (PDFLiteralString*)obj, depth);
+            PDFnode<PDFLiteralString> obj_adapt((PDFLiteralString*)obj);
+            parseObjectLiteralStr(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectHexString){
             //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectHexString" << endl;
-            parseObjectHexString(parser, (PDFHexString*)obj, depth);
+            PDFnode<PDFHexString> obj_adapt((PDFHexString*)obj);
+            parseObjectHexString(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectNull){
             //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectNull" << endl;
-            parseObjectNull(parser, (PDFNull*)obj, depth);
+            PDFnode<PDFNull> obj_adapt((PDFNull*)obj);
+            parseObjectNull(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectName){
             //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectName" << endl;
-            parseObjectName(parser, (PDFName*)obj, depth);
+            PDFnode<PDFName> obj_adapt((PDFName*)obj);
+            parseObjectName(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectInteger){
             //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectInteger" << endl;
-            parseObjectInteger(parser, (PDFInteger*)obj, depth);
+            PDFnode<PDFInteger> obj_adapt((PDFInteger*)obj);
+            parseObjectInteger(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectReal){
             //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectReal" << endl;
-            parseObjectReal(parser, (PDFReal*)obj, depth);
+            PDFnode<PDFReal> obj_adapt((PDFReal*)obj);
+            parseObjectReal(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectArray){
             //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
+            PDFnode<PDFArray> obj_adapt((PDFArray*)obj);
             parseObjectArray(parser, (PDFArray*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectDictionary){
             // if (LOG>=3) cout << std::string(depth, '.') << "(ePDFObjectDictionary)" << endl;  // 8
-            parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
+            PDFnode<PDFDictionary> obj_adapt((PDFDictionary*)obj);
+            parsePDFDictionary(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectIndirectObjectReference){
             // if (LOG>=3) cout << std::string(depth, '.') << "(ePDFObjectIndirectObjectReference)" << endl;
-            parsePDFIndirectObjectReference(parser, (PDFIndirectObjectReference*) obj, depth);
+            PDFnode<PDFIndirectObjectReference> obj_adapt((PDFIndirectObjectReference*)obj);
+            parsePDFIndirectObjectReference(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectStream){         // 10
             //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectStream" << endl;
-            parseObjectStream(parser, (PDFStreamInput*)obj, depth);
+            PDFnode<PDFStreamInput> obj_adapt((PDFStreamInput*)obj);
+            parseObjectStream(parser, &obj_adapt, depth);
         }
         else {
             if (LOG>=3) cout << std::string(depth, '.') << "array ELSE " << obj->GetType() << endl; //IndirectRef
@@ -560,51 +571,64 @@ inline void SymbolLookup::parsePDFDictionary(PDFParser &parser, PDFDictionary *o
         if (name->GetValue().compare("Parent") == 0) return;  // avoid cycles
         if (obj->GetType() == PDFObject::ePDFObjectBoolean){
             if (LOG>=2) cout << std::string(depth, '.') << "ePDFObjectBoolean" <<endl;
-            parseObjectBoolean(parser, (PDFBoolean*)obj, depth);
+            PDFnode<PDFBoolean> obj_adapt((PDFBoolean*)obj);
+            parseObjectBoolean(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectLiteralString){
             if (LOG>=2) cout << std::string(depth, '.') << "ePDFObjectLiteralString" << endl;
-            parseObjectLiteralStr(parser, (PDFLiteralString*)obj, depth);
+            PDFnode<PDFLiteralString> obj_adapt((PDFLiteralString*)obj);
+            parseObjectLiteralStr(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectHexString){
             if (LOG>=2) cout << std::string(depth, '.') << "ePDFObjectHexString" << endl;
-            parseObjectHexString(parser, (PDFHexString*)obj, depth);
+            PDFnode<PDFHexString> obj_adapt((PDFHexString*)obj);
+            parseObjectHexString(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectNull){
             if (LOG>=2) cout << std::string(depth, '.') << "ePDFObjectNull" << endl;
-            // parseObjectNull(parser, (PDFNull*)obj, depth);
+            // PDFnode<PDFNull> obj_adapt((PDFNull*)obj);
+            // parseObjectNull(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectName){
             if (LOG>=2) cout << std::string(depth, '.') << "ePDFObjectName" << endl;
-            parseObjectName(parser, (PDFName*)obj, depth);
+            PDFnode<PDFName> obj_adapt((PDFName*)obj);
+            parseObjectName(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectInteger){
             if (LOG>=2) cout << std::string(depth, '.') << "ePDFObjectInteger" << endl;
-            parseObjectInteger(parser, (PDFInteger*)obj, depth);
+            PDFnode<PDFInteger> obj_adapt((PDFInteger*)obj);
+            parseObjectInteger(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectReal){
             if (LOG>=2) cout << std::string(depth, '.') << "ePDFObjectReal" << endl;
-            parseObjectReal(parser, (PDFReal*)obj, depth);
+            PDFnode<PDFReal> obj_adapt((PDFReal*)obj);
+            parseObjectReal(parser, &obj_adapt, depth);
         }
+
         else if (obj->GetType() == PDFObject::ePDFObjectArray){
             if (LOG>=2) cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
+
             // Option 2 (symbol lookup table)
             if (name->GetValue().compare(resource_differences) == 0) {
                 add_table((PDFArray*)obj);
             }
+            PDFnode<PDFArray> obj_adapt((PDFArray*)obj);
             parseObjectArray(parser, (PDFArray*)obj, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectDictionary){
             if (LOG>=2) cout << std::string(depth, '.') << "(ePDFObjectDictionary)" << endl;  // 8
-            parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
+            PDFnode<PDFDictionary> obj_adapt((PDFDictionary*)obj);
+            parsePDFDictionary(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectIndirectObjectReference){
             if (LOG>=2) cout << std::string(depth, '.') << "(ePDFObjectIndirectObjectReference)" << endl;
-            parsePDFIndirectObjectReference(parser, (PDFIndirectObjectReference*) obj, depth);
+            PDFnode<PDFIndirectObjectReference> obj_adapt((PDFIndirectObjectReference*)obj);
+            parsePDFIndirectObjectReference(parser, &obj_adapt, depth);
         }
         else if (obj->GetType() == PDFObject::ePDFObjectStream){         // 10
             if (LOG>=2) cout << std::string(depth, '.') << "ePDFObjectStream" << endl;
-            parseObjectStream(parser, (PDFStreamInput*)obj, depth);
+            PDFnode<PDFStreamInput> obj_adapt((PDFStreamInput*)obj);
+            parseObjectStream(parser, &obj_adapt, depth);
         }
         else {
             if (LOG>=2) cout << std::string(depth, '.') << "UNKNOWN" <<endl;
@@ -619,43 +643,53 @@ inline void SymbolLookup::parsePDFIndirectObjectReference(PDFParser &parser, PDF
 
     if (obj->GetType() == PDFObject::ePDFObjectBoolean){
         //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectBoolean" <<endl;
-        parseObjectBoolean(parser, (PDFBoolean*)obj, depth);
+        PDFnode<PDFBoolean> obj_adapt((PDFBoolean*)obj);
+        parseObjectBoolean(parser, &obj_adapt, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectLiteralString){
         //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectLiteralString" << endl;
-        parseObjectLiteralStr(parser, (PDFLiteralString*)obj, depth);
+        PDFnode<PDFLiteralString> obj_adapt((PDFLiteralString*)obj);
+        parseObjectLiteralStr(parser, &obj_adapt, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectHexString){
         //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectHexString" << endl;
-        parseObjectHexString(parser, (PDFHexString*)obj, depth);
+        PDFnode<PDFHexString> obj_adapt((PDFHexString*)obj);
+        parseObjectHexString(parser, &obj_adapt, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectNull){
         //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectNull" << endl;
-        parseObjectNull(parser, (PDFNull*)obj, depth);
+        PDFnode<PDFNull> obj_adapt((PDFNull*)obj);
+        parseObjectNull(parser, &obj_adapt, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectName){
         // if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectName" << endl;
-        parseObjectName(parser, (PDFName*)obj, depth);
+        PDFnode<PDFName> obj_adapt((PDFName*)obj);
+        parseObjectName(parser, &obj_adapt, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectInteger){
         //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectInteger" << endl;
-        parseObjectInteger(parser, (PDFInteger*)obj, depth);
+        PDFnode<PDFInteger> obj_adapt((PDFInteger*)obj);
+        parseObjectInteger(parser, &obj_adapt, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectReal){
         //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectReal" << endl;
-        parseObjectReal(parser, (PDFReal*)obj, depth);
+        PDFnode<PDFReal> obj_adapt((PDFReal*)obj);
+        parseObjectReal(parser, &obj_adapt, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectArray){
         //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectArray" << endl;
-        parseObjectArray(parser, (PDFArray*)obj, depth);
+        PDFnode<PDFArray> obj_adapt((PDFArray*)obj);
+        parseObjectArray(parser, &obj_adapt, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectDictionary){
         //if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectDictionary" << endl;
-        parsePDFDictionary(parser, (PDFDictionary*)obj, depth);
+        PDFnode<PDFDictionary> obj_adapt((PDFDictionary*)obj);
+        parsePDFDictionary(parser, &obj_adapt, depth);
     }
     else if (obj->GetType() == PDFObject::ePDFObjectStream){
         // if (LOG>=3) cout << std::string(depth, '.') << "ePDFObjectStream" << endl; // parser.GetPageObjectID(obj)
-        parseObjectStream(parser, (PDFStreamInput*)obj, depth);
+        PDFnode<PDFStreamInput> obj_adapt((PDFStreamInput*)obj);
+        parseObjectStream(parser, &obj_adapt, depth);
     }
     else {
         if (LOG>=3) cout << std::string(depth, '.') << "UNKNOWN" << endl;
