@@ -44,3 +44,48 @@ public:
 };
 
 
+/// NOTE: !!!!
+///  this is still required as: PDFnode<PDFArray> obj_adapt((PDFArray*)obj);  // crash and subsequent
+
+//template <>
+//class PDFnode<PDFArray> : public PDFArray {
+//public:
+//    void accept() {std::cout << "accept from PDFnodeTemplate ptr - array"<<std::endl;}
+//    PDFnode( PDFArray * inValue){
+//        auto it = inValue->GetIterator();
+//        auto i = 0;
+//        for(it.MoveNext(); !it.IsFinished(); it.MoveNext()){
+//            // std::cout  << i << " " << it.GetItem()->GetType() << std::endl;
+//            AppendObject(std::move(it.GetItem()));  //TODO: is move the right thing here?
+//            i++;
+//        }
+//        // TODO: should we cleanup input array at this point?
+//        accept();
+//    }
+//};
+
+//template <>
+//class PDFnode<PDFDictionary> : public PDFDictionary {
+//public:
+//    void accept() {std::cout << "accept from PDFnodeTemplate ptr - dictionary"<<std::endl;}
+//    PDFnode( PDFDictionary * inValue){
+//        auto it = inValue->GetIterator();
+//        for(it.MoveNext(); !it.IsFinished(); it.MoveNext()){
+//            auto key = it.GetKey();
+//            auto value = it.GetValue();
+//            Insert(key, value);
+//        }
+//        // TODO: should we cleanup input array at this point?
+//        accept();
+//    }
+//};
+
+//template <>
+//class PDFnode<PDFIndirectObjectReference> : public PDFIndirectObjectReference {
+//public:
+//    void accept() {std::cout << "accept from PDFnodeTemplate ptr - indirectRef"<<std::endl;}
+//    PDFnode(PDFIndirectObjectReference * inValue) : PDFIndirectObjectReference(inValue->mObjectID, inValue->mVersion) {
+//        accept();
+//    }
+//};
+
