@@ -16,7 +16,7 @@ to install it:
 ```
 git clone https://github.com/galkahana/PDF-Writer.git
 mkdir __build && cd __build
-cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/toolchains/hummus
+cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/toolchains/hummus -DCMAKE_BUILD_TYPE=Debug
 make install
 ```
 
@@ -47,4 +47,10 @@ in text.h set:
 
 update main.cpp to test specific pdf file
 
+### Sanitizers
+
+```
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+```
 
