@@ -48,10 +48,10 @@ TEST_CASE ("problematic heap allocation only - for dictionaries") {
 
     // NOTE: to test disable all the spacializations of PDFnode
 
-    // This will segafuault
-    //PDFDictionary dictionary;
-    //dictionary.Insert(&aaa_name, &aaa_pdf);
-    //auto pdf_stream = unique_ptr<PDFStreamInput> (new PDFStreamInput(&dictionary, 0));
+    // With PDFStreamInput specialization - this works fine
+    PDFDictionary dictionary;
+    dictionary.Insert(&aaa_name, &aaa_pdf);
+    auto pdf_stream = unique_ptr<PDFStreamInput> (new PDFStreamInput(&dictionary, 0));
 
     // with unique_ptr this fails too
     //auto dictionary = unique_ptr<PDFDictionary>(new PDFDictionary()); // needs heap allocation
@@ -60,10 +60,10 @@ TEST_CASE ("problematic heap allocation only - for dictionaries") {
 
     // This standar pointer works but requires explicit delete once we donw with pdf_stream
     // so there is a problem with a liftime of in the destructor of PDFStreamInput?
-    PDFDictionary * dictionary = new PDFDictionary(); // needs heap allocation
-    dictionary->Insert(&aaa_name, &aaa_pdf);
-    auto pdf_stream = unique_ptr<PDFStreamInput> (new PDFStreamInput(dictionary, 0));
-    delete dictionary;
+    //PDFDictionary * dictionary = new PDFDictionary(); // needs heap allocation
+    //dictionary->Insert(&aaa_name, &aaa_pdf);
+    //auto pdf_stream = unique_ptr<PDFStreamInput> (new PDFStreamInput(dictionary, 0));
+    //delete dictionary;
 
 
     // remaing of the test
