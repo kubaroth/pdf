@@ -20,6 +20,7 @@ template <typename T> class PDFnode<T*>;
 
 class NodeVisitor{
 public:
+    virtual ~NodeVisitor(){}
     virtual void visit(PDFnode<PDFBoolean> *) = 0;
     virtual void visit(PDFnode<PDFLiteralString> *) = 0;
     virtual void visit(PDFnode<PDFHexString> *) = 0;
@@ -36,7 +37,12 @@ public:
 
 // TODO: are we gonna store data inside visitor?
 class TestVisitor:  public NodeVisitor{
+private:
+    PDFParser &parser_;
 public:
+    ~TestVisitor(){}
+    explicit TestVisitor(PDFParser parser) : parser_(parser) {}
+
     void visit(PDFnode<PDFBoolean> * node) override{
         std::cout << "++++TestVistor - PDFBoolean" << std::endl;
     }
