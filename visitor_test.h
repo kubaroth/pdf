@@ -34,7 +34,8 @@ public:
     virtual void visit(PDFnode<PDFSymbol> *) = 0;
 };
 
-class TestVistor:  public NodeVisitor{
+// TODO: are we gonna store data inside visitor?
+class TestVisitor:  public NodeVisitor{
 public:
     void visit(PDFnode<PDFBoolean> * node) override{
         std::cout << "++++TestVistor - PDFBoolean" << std::endl;

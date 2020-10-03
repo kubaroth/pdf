@@ -32,12 +32,12 @@ public:
     }
     // construc from another object
     PDFnode(const T& inValue, NodeVisitor * visitor = nullptr) : T((inValue)){ /* transfer ownership */
-        if (visitor) accept(*visitor);
+        //if (visitor) accept(*visitor);
 
     }
     // construc from pointer
     PDFnode(const T* inValue, NodeVisitor * visitor = nullptr) : T(*inValue){ /* transfer ownership */
-        if (visitor) accept(*visitor);
+        //if (visitor) accept(*visitor);
     }
     PDFnode (PDFnode const&) = delete;
     PDFnode& operator=(PDFnode const&) = delete;
@@ -50,8 +50,11 @@ public:
 template <>
 class PDFnode<PDFArray> : public PDFArray {
 public:
-    void accept() {std::cout << "accept from PDFnodeTemplate ptr - array"<<std::endl;}
-    PDFnode( PDFArray * inValue){
+    void accept(NodeVisitor & visitor) {
+        std::cout << "accept from PDFnodeTemplate ptr - array"<<std::endl;
+        visitor.visit(this);
+    }
+    PDFnode( PDFArray * inValue, NodeVisitor * visitor = nullptr){
         auto it = inValue->GetIterator();
         auto i = 0;
         for(it.MoveNext(); !it.IsFinished(); it.MoveNext()){
@@ -60,15 +63,18 @@ public:
             i++;
         }
         // TODO: should we cleanup input array at this point?
-        accept();
+        //if (visitor) accept(*visitor);
     }
 };
 
 template <>
 class PDFnode<PDFDictionary> : public PDFDictionary {
 public:
-    void accept() {std::cout << "accept from PDFnodeTemplate ptr - dictionary"<<std::endl;}
-    PDFnode( PDFDictionary * inValue){
+    void accept(NodeVisitor & visitor) {
+        std::cout << "accept from PDFnodeTemplate ptr - dictionary"<<std::endl;
+        visitor.visit(this);
+    }
+    PDFnode( PDFDictionary * inValue, NodeVisitor * visitor = nullptr){
         auto it = inValue->GetIterator();
         for(it.MoveNext(); !it.IsFinished(); it.MoveNext()){
             auto key = it.GetKey();
@@ -76,24 +82,34 @@ public:
             Insert(key, value);
         }
         // TODO: should we cleanup input array at this point?
-        accept();
+        //if (visitor) accept(*visitor);
     }
 };
 
 template <>
 class PDFnode<PDFIndirectObjectReference> : public PDFIndirectObjectReference {
 public:
-    void accept() {std::cout << "accept from PDFnodeTemplate ptr - indirectRef"<<std::endl;}
-    PDFnode(PDFIndirectObjectReference * inValue) : PDFIndirectObjectReference(inValue->mObjectID, inValue->mVersion) {
-        accept();
+    void accept(NodeVisitor & visitor) {
+        std::cout << "accept from PDFnodeTemplate ptr - indirectRef"<<std::endl;
+        visitor.visit(this);
+    }
+    PDFnode(PDFIndirectObjectReference * inValue, NodeVisitor * visitor = nullptr) :
+        PDFIndirectObjectReference(inValue->mObjectID,
+                                   inValue->mVersion) {
+        //if (visitor) accept(*visitor);
     }
 };
 
 template <>
 class PDFnode<PDFStreamInput> : public PDFStreamInput {
 public:
-    void accept() {std::cout << "accept from PDFnodeTemplate ptr - steamRef"<<std::endl;}
-    PDFnode(PDFStreamInput * inValue) : PDFStreamInput(inValue->QueryStreamDictionary(), inValue->GetStreamContentStart()) {
-        accept();
+    void accept(NodeVisitor & visitor) {
+        std::cout << "accept from PDFnodeTemplate ptr - streamInput"<<std::endl;
+        visitor.visit(this);
+    }
+    PDFnode(PDFStreamInput * inValue, NodeVisitor * visitor = nullptr) :
+        PDFStreamInput(inValue->QueryStreamDictionary(),
+                       inValue->GetStreamContentStart()) {
+        //if (visitor) accept(*visitor);
     }
 };

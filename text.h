@@ -753,6 +753,9 @@ inline unique_ptr<TextData> parse_page(string document_path, int page_number){
                 }
                 /// THis is the first pass of the parser where we populate the character tables
                 /// TODO: collect document dimentions, (maybe all the bounding boxes for text)
+                TestVisitor vt;
+//                dictObject.accept(vt); //TODO: implment
+
                 lookup.parsePDFDictionary(parser, &dictObject, 0);
             }
             /// Top level is a Stream
