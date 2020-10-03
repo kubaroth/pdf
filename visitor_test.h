@@ -39,55 +39,41 @@ public:
     void visit(PDFnode<PDFBoolean> * node) override{
         std::cout << "++++TestVistor - PDFBoolean" << std::endl;
     }
-    void visit(PDFnode<PDFLiteralString> * node) override;
-    void visit(PDFnode<PDFHexString> * node) override;
-    void visit(PDFnode<PDFNull> * node) override;
-    void visit(PDFnode<PDFName> * node) override;
-    void visit(PDFnode<PDFInteger> * node) override;
-    void visit(PDFnode<PDFReal> * node) override;
-    void visit(PDFnode<PDFArray> * node) override;
-    void visit(PDFnode<PDFDictionary> * node) override;
-    void visit(PDFnode<PDFIndirectObjectReference> * node) override;
-    void visit(PDFnode<PDFStreamInput> * node) override;
-    void visit(PDFnode<PDFSymbol> * node) override;
+    void visit(PDFnode<PDFLiteralString> * node) override{
+        std::cout << "++++TestVistor - PDFLiteralString" << std::endl;
+    }
+    void visit(PDFnode<PDFHexString> * node) override{
+        std::cout << "++++TestVistor - PDFHexString" << std::endl;
+    }
+    void visit(PDFnode<PDFNull> * node) override{
+        std::cout << "++++TestVistor - PDFNull" << std::endl;
+    }
+    void visit(PDFnode<PDFName> * node) override{
+        std::cout << "++++TestVistor - PDFName" << std::endl;
+    }
+    void visit(PDFnode<PDFInteger> * node) override{
+        std::cout << "++++TestVistor - PDFInteger" << std::endl;
+    }
+    void visit(PDFnode<PDFReal> * node) override{
+        std::cout << "++++TestVistor - PDFReal" << std::endl;
+    }
+    void visit(PDFnode<PDFArray> * node) override{
+        std::cout << "++++TestVistor - PDFArray" << std::endl;
+    }
+    void visit(PDFnode<PDFDictionary> * node) override{
+        std::cout << "++++TestVistor - PDFDictionary" << std::endl;
+    }
+    void visit(PDFnode<PDFIndirectObjectReference> * node) override{
+        std::cout << "++++TestVistor - PDFIndirectObjectReference" << std::endl;
+    }
+    void visit(PDFnode<PDFStreamInput> * node) override{
+        std::cout << "++++TestVistor - PDFStreamInput" << std::endl;
+    }
+    void visit(PDFnode<PDFSymbol> * node) override{
+        std::cout << "++++TestVistor - PDFSymbol" << std::endl;
+    }
 
 };
-
-
-void TestVistor::visit(PDFnode<PDFLiteralString> * node) {
-    std::cout << "++++TestVistor - PDFLiteralString" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFHexString> * node) {
-    std::cout << "++++TestVistor - PDFHexString" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFNull> * node) {
-    std::cout << "++++TestVistor - PDFNull" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFName> * node) {
-    std::cout << "++++TestVistor - PDFName" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFInteger> * node) {
-    std::cout << "++++TestVistor - PDFInteger" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFReal> * node) {
-    std::cout << "++++TestVistor - PDFReal" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFArray> * node) {
-    std::cout << "++++TestVistor - PDFArray" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFDictionary> * node) {
-    std::cout << "++++TestVistor - PDFDictionary" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFIndirectObjectReference> * node) {
-    std::cout << "++++TestVistor - PDFIndirectObjectReference" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFStreamInput> * node) {
-    std::cout << "++++TestVistor - PDFStreamInput" << std::endl;
-}
-void TestVistor::visit(PDFnode<PDFSymbol> * node) {
-    std::cout << "++++TestVistor - PDFSymbol" << std::endl;
-}
-
 
 
 

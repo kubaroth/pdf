@@ -23,7 +23,7 @@ make install
 ## Testing
 
 ```
-./test1
+./ctest
 ```
 
 The test1 which covers basic cases of extracting text from Pdf Object types.

@@ -50,7 +50,7 @@ using namespace PDFHummus;
 // 1: main messages
 // 2: useful debug
 // 3: all (currently disabled, as these execution paths are not used)
-#define LOG 1
+#define LOG 0
 
 /// Store extracted text (location/alignment/bbox in the future)
 struct TextData {
