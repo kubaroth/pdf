@@ -12,6 +12,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set (sources
   main.cpp
+  visitor_test.cpp
 )
 
 set (HUMMUS_PATH $ENV{HOME}/toolchains/hummus/ CACHE STRING "Path to PDF-Writer libraries" )
@@ -33,18 +34,21 @@ target_link_libraries(a.out
 add_executable(test1
   tests/main.cpp
   tests/test1.cpp
+  visitor_test.cpp
   )
 add_test(NAME test1 COMMAND test1)
 
 add_executable(test_traverse_nodes
   tests/main.cpp
   tests/test_traverse_nodes.cpp
+  visitor_test.cpp
   )
 add_test(NAME test_traverse_nodes COMMAND test_traverse_nodes)
 
 add_executable(test2
   tests/main.cpp
   tests/test2.cpp
+  visitor_test.cpp
   )
 add_test(NAME test2 COMMAND test2)
 

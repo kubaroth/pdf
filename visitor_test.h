@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include <PDFWriter/PDFObject.h>
 #include <PDFWriter/PDFBoolean.h>
 #include <PDFWriter/PDFLiteralString.h>
@@ -13,6 +15,7 @@
 #include <PDFWriter/PDFIndirectObjectReference.h>
 #include <PDFWriter/PDFStreamInput.h>
 #include <PDFWriter/PDFSymbol.h>
+#include <PDFWriter/PDFParser.h>
 
 template <typename T> class PDFnode;
 template <typename T> class PDFnode<T*>;
@@ -42,7 +45,6 @@ private:
 public:
     ~TestVisitor(){}
     explicit TestVisitor(PDFParser parser) : parser_(parser) {}
-
     void visit(PDFnode<PDFBoolean> * node) override{
         std::cout << "++++TestVistor - PDFBoolean" << std::endl;
     }
@@ -67,9 +69,8 @@ public:
     void visit(PDFnode<PDFArray> * node) override{
         std::cout << "++++TestVistor - PDFArray" << std::endl;
     }
-    void visit(PDFnode<PDFDictionary> * node) override{
-        std::cout << "++++TestVistor - PDFDictionary" << std::endl;
-    }
+    void visit(PDFnode<PDFDictionary> * node) override;
+
     void visit(PDFnode<PDFIndirectObjectReference> * node) override{
         std::cout << "++++TestVistor - PDFIndirectObjectReference" << std::endl;
     }

@@ -30,7 +30,7 @@ public:
         std::cout << "accept from PDFnodeTemplate"<<std::endl;
         visitor.visit(this);
     }
-    // construc from another object
+    // construct from another object
     PDFnode(const T& inValue, NodeVisitor * visitor = nullptr) : T((inValue)){ /* transfer ownership */
         //if (visitor) accept(*visitor);
 
