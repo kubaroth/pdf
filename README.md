@@ -21,6 +21,11 @@ to install it:
     cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/toolchains/hummus -DCMAKE_BUILD_TYPE=Debug
     make install
 
+### Build documentation
+
+The documentation is built into: docs/_build/html/index.html
+
+    make docs
 
 ## Testing
 
