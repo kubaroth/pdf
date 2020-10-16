@@ -6,6 +6,10 @@ A library to extract text (std::string) from PDF streams.
     int page_number = 123;
     auto data = parse_page("document.pdf", page_number);
     cout << data->text <<endl;
+    
+## Documentation
+
+[Check documentation](https://kubaroth.github.io/pdf-text/docs/docs_build/html/index.html)
 
 ## Building
 
@@ -21,9 +25,9 @@ to install it:
     cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/toolchains/hummus -DCMAKE_BUILD_TYPE=Debug
     make install
 
-### Build documentation
+### Building documentation
 
-The documentation is built into: docs/_build/html/index.html
+The documentation is built into: docs/docs_build/html/index.html
 
     make docs
 
