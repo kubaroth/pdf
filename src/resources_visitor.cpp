@@ -103,10 +103,10 @@ void ResourcesVisitor::visit(PDFnode<PDFDictionary> * node) {
     while(it.MoveNext()) {
         PDFName* name = it.GetKey();
         PDFObject* obj = it.GetValue();
-        cout << "name " << name->GetValue() << endl;
+        if (LOG>=1) cout << "name " << name->GetValue() << endl;
 
         if (obj->GetType() == PDFObject::ePDFObjectName){
-            cout << "ObjectName : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFName*)obj)->GetValue() <<endl;
+            if (LOG>=1) cout << "ObjectName : " <<  obj->scPDFObjectTypeLabel(obj->GetType()) << " : " << ((PDFName*)obj)->GetValue() <<endl;
         }
     }
     it = node->GetIterator();

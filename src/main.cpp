@@ -7,8 +7,8 @@ int main() {
    
     // parse_page("../dsohowto.pdf", 0);
 
-//    auto textDataPtr = parse_page("non_exist_pdf", 0);
-//    cout << "NULL: " << (textDataPtr == nullptr) <<endl;
+    // auto textDataPtr = parse_page("non_exist_pdf", 0);
+    // cout << "NULL: " << (textDataPtr == nullptr) <<endl;
 
     // Below tests are primarily for debugging purposes.
     
